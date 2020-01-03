@@ -104,4 +104,256 @@ buffer-name ;; error
   (message "The result is %d" (* 7 number)))
 ; C-u 8 M-x multiple-by-seven (or key)
 
+;; let expression
+
+(let ((zebra "stripes")
+      (tiger "fierce"))
+  (message "One kind of animal has %s and another is %s."
+           zebra tiger))
+
+;; uninitialized variables in a let statement
+
+(let ((birch 3)
+      pine
+      fir
+      (oak 'some))
+  (message
+   "Here are %d variables with %s, %s, and %s value."
+   birch pine fir oak))
+
+;; the if special form
+
+(if (> 5 4)
+    (message "True."))
+
+(defun type-of-animal (characteristic)
+  "print message depending on CHARACTERISTIC.
+If the characteristic is the string \"fierce\",
+then warn of a tiger."
+  (if (equal characteristic "fierce")
+      (message "It is a tiger!") ;; if then
+    (message "It is not fierce"))) ;; else condition
+
+(type-of-animal "fierce")
+(type-of-animal "stripes")
+
+;; if else
+
+(if (> 4 5)
+    (message "4 > 5!")
+  (message "wrong 4 < 5!"))
+
+;; nil in emacs it is false, it is empty list
+;; is not nil == true
+(if 4
+    'true
+  'false)
+
+(if nil
+    'true
+  'false)
+
+;; save-excursion
+;; C-SPC (set-mark-command)
+;; C-x C-x (exchange-point-and-mark)
+;; C-u C-SPC jump the cusror to a saved mark
+
+(let (a)
+  (save-excursion
+    (goto-char (/ (buffer-size) 2))
+    ))
+
+(message "We are %d charecters into this buffer."
+         (- (point)
+            (save-excursion
+              (goto-char (point-min))
+              (point)
+              )))
+
+;; eval-last-sexp C-x C-e
+
+
 ;; Exercises
+(defun double-number (number)
+  "Double NUMBER."
+  (* number 2))
+(double-number 3)
+(defun double-number-interactive (number)
+  "Double NUMBER."
+  (interactive "p")
+  (message "The result is %d" (* number 2)))
+
+(defun compare-fill-column (number)
+  "Compare NUMBER with (fill-column)."
+  (if (> number fill-column)
+      (message "Number greater than fill-column.")
+    (message "Number lower than fill-column.")))
+(compare-fill-column 83)
+fill-column ;; 70
+
+;; 4 A Few Buffer-Related Functions
+
+;; M-. (xref-find-definitions) M-, return to previous buffer
+
+; C-h p emacs docs by topics
+
+;;
+;; M-< M-> beginning-of-buffer
+(defun simplified-beginning-of-buffer ()
+  "Move point to the beginnging of the buffer;
+Leave mark at the previous position."
+  (interactive)
+  (push-mark)
+  (goto-char (point-min)))
+
+;; transient-mark-mode (select enable disable)
+(transient-mark-mode nil)
+
+;; old mark-whole-buffer emacs 22
+(defun custom-mark-whole-buffer ()
+  "try avoid push mark into real code."
+  (interactive)
+  (push-mark (point))
+  (push-mark (point-max) nil t)
+  (goto-char (point-min)))
+;; now function def differ from emacs 22 check it (mark-whole-buffer)
+
+;; 4.4 the definition of append-to-buffer (old emacs)
+
+(defun custom-append-to-buffer (buffer start end)
+  "Append to specified buffer the text of the region.
+It is inserted into that buffer before its point.
+
+When calling from a program, give three arguments:
+BUFFER (or buffer name), START and END.
+START and END specify the portion of the current buffer to be copied."
+  (interactive
+   (list (read-buffer "Append to buffer: " (other-buffer
+                                            (current-buffer) t))
+         (region-beginning) (region-end)))
+  (let ((oldbuf (current-buffer)))
+    (save-excursion
+      (let* ((append-to (get-buffer-create buffer))
+             (windows (get-buffer-window-list append-to t t))
+             point)
+        (set-buffer append-to)
+        (setq point (point))
+        (barf-if-buffer-read-only)
+        (insert-buffer-substring oldbuf start end)
+        (dolist (window windows)
+          (when (= (window-point window) point)
+            (set-window-point window (point))))))))
+
+(append-to-buffer)
+;; 4.6 Exercises
+
+;; Write your own simplified-end-of-buffer function definition; then test it
+;; to see whether it works.
+(defun simplified-end-of-buffer ()
+  "Go to the end of buffer."
+  (interactive)
+  (push-mark)
+  (goto-char (point-max)))
+
+(end-of-buffer)
+
+;; Use if and get-buffer to write a function that prints a message telling you
+;; whether a buffer exists.
+(defun is-buffer-exist (buffer)
+  "Check that buffer with BUFFER as name exist."
+  (if (get-buffer buffer)
+      (message "Buffer %s exists." buffer)
+    (message "Buffer %s does not exist." buffer)))
+
+(is-buffer-exist "does_not_exist.el")
+(is-buffer-exist "start.el")
+
+;; Using xref-find-definitions, find the source for the copy-to-buffer function.
+(xref-find-definitions 'copy-to-buffer)
+
+
+;; 5.1 The Definition of copy-to-buffer
+(defun custom-copy-to-buffer (buffer start end)
+  "Replace text into BUFFER with current buffer (region)."
+  (interactive "BCopy to buffer: \nr")
+  (let ((oldbuf (current-buffer)))
+    (with-current-buffer (get-buffer-create buffer)
+      (barf-if-buffer-read-only)
+      (erase-buffer)
+      (save-excursion
+        (insert-buffer-substring oldbuf start end)))))
+
+(copy-to-buffer)
+
+;; 5.2 The Definition of insert-buffer
+
+(insert-buffer)
+
+;; old version
+(defun custom-insert-buffer (buffer)
+  "Insert after point the contents of BUFFER.
+Puts mark after inserted text.
+BUFFER may be a buffer or buffer name."
+  (interactive "*bInsert buffer: ")
+  ;; (or (bufferp buffer)
+  ;;     (setq buffer (get-buffer buffer)))
+  (if (not (bufferp buffer)) ;; true if argument is buffer, false if it is name of the buffer
+      (setq buffer (get-buffer buffer)))
+  (let (start end newmark)
+        (save-excursion
+          (save-excursion
+            (set-buffer buffer)
+            (setq start (point-min) end (point-max)))
+          (insert-buffer-substring buffer start end)
+          (setq newmark (point)))
+        (push-mark newmark)))
+
+;; alternative defun insert text into push-mark
+;; avoid create additional variables
+;; (push-mark
+;;   (save-excursion
+;;     (insert-buffer-substring (get-buffer buffer))
+;;     (point)))
+;;  nil
+
+;; 5.3 Complete Definition of beginning-of-buffer
+
+;; (defun beginning-of-buffer (&optional arg)
+;;   "documentation..."
+;;   (interactive "P")
+;;   (or (is-the-argument-a-cons-cell arg)
+;;       (and are-both-transient-mark-mode-and-mark-active-true)
+;;       (push-mark))
+;;   (let (determine-size-and-set-it)
+;;     (goto-char
+;;      (if-there-is-an-argument
+;;         figure-out-where-to-go
+;;       else-go-to
+;;       (point-min))))
+;;     do-nicety
+(beginning-of-buffer)
+
+(not (consp arg)) ;; забыли казать С-u 6 оставили ячейку пустой, это значит consp arg = nil
+
+;; 5.5 optional Argument Exercise
+;; Write an interactive function with an optional argument that tests whether its
+;; argument, a number, is greater than or equal to, or else, less than the value of
+;; fill-column, and tells you which, in a message. However, if you do not pass an
+;; argument to the function, use 56 as a default value.
+
+(defun compare-5-5 (&optional arg)
+  "docs comparator with optional ARG
+if arg missiong compare with 56, another case compare with fill column
+"
+  (interactive "p")
+  (or (not (consp arg))
+      (setq arg 56))
+  (if (>= fill-column arg)
+      (message "%s >= %s" fill-column arg)
+    (message "%s < %s" fill-column arg)))
+
+(compare-5-5 55)
+(compare-5-5 70)
+(compare-5-5) ;; optional only into interactive session
+
+;; http://ergoemacs.org/emacs/elisp_optional_params.html
