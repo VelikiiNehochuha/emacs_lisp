@@ -414,7 +414,7 @@ C-x n n.)
   (save-restriction
     (widen)
     (save-excursion
-      (message (buffer-substring 1 60)))))
+      (message (filter-buffer-substring 1 60)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 7 car, cdr, cons: Fundamental Functions
@@ -478,3 +478,82 @@ birds
 birds
 (setcdr birds '(fish2 fish3 fish4))
 birds
+
+;; 8 Cutting and Storing Text
+;; 8.1 zap-to-char
+
+(zap-to-char) ; interactive remove text from point to char and push it to kill-ring
+
+(defun test-zap-to-char (arg char)
+  "Kill up to and including ARG'th occurence of the CHR
+Case is ignored if `case-fold-search' is non-nil in the current buffer.
+Goes backward if ARG is negative; error if CHAR not found."
+  (interactive "p\ncZap to chat: ")
+  (if (char-table-p translation-table-for-input)
+      (setq char (or (aref translation-table-for-input char) char)))
+  (kill-region (point) (progn
+                         (search-forward (char-to-string char)
+                                         nil nil arg)
+                         (point))))
+
+; 8.1.4 The progn Special Form
+(progn
+  body...) ;; вернут результат последнего выражения
+
+;; обработка ошибок, в случае исключения отрабатывает error-handler
+(condition-case
+    var
+    bodyform
+  error-handler...)
+
+;; 8.2.2 Lisp macro
+when it is if without else-part
+
+;; 8.3 copy-region-as-kill
+
+(defun copy-region-as-kill (beg end)
+  "Save the region as if killed, but don't kill it.
+In Transient Mark mode, deactivate the mark.
+If `interprogram-cut-function' is non-nil, also save the text for a window
+system cut and paste."
+  (interactive "r")
+  (if (eq last-command 'kill-region)
+      (kill-append (filter-buffer-substring beg end) (< end beg))
+    (kill-new (filter-buffer-substring beg end)))
+  (if transient-mark-mode
+      (setq deactivate-mark t)))
+
+;; 8.7 Searching Exercises
+;; Write an interactive function that searches for a string. If the search finds the
+;; string, leave point after it and display a message that says “Found!”. (Do not
+;; use search-forward for the name of this function; if you do, you will overwrite
+;; the existing version of search-forward that comes with Emacs. Use a name
+;; such as test-search instead.)
+
+(defun test-search (arg word)
+  "Search the WORD and move point and print 'Found'!"
+  (interactive "p\nsSearch word: ")
+  (condition-case nil
+      (progn
+        (search-forward word nil nil arg)
+        (message "Found!"))
+    (error (message "Not Found!"))))
+
+;; Write a function that prints the third element of the kill ring in the echo area,
+;; if any; if the kill ring does not contain a third element, print an appropriate
+;; message.
+
+kill-ring
+(nth 1 kill-ring)
+
+(defun third-el-kill-ring ()
+  "print third el into kill ring"
+  (interactive)
+  (let (value)
+    (setq value (nth 15 kill-ring))
+    (if value
+        (message "%s" value)
+      (message "Empty"))))
+
+
+;; 9 How Lists are Implemented
