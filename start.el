@@ -415,3 +415,66 @@ C-x n n.)
     (widen)
     (save-excursion
       (message (buffer-substring 1 60)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; 7 car, cdr, cons: Fundamental Functions
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; 7.1 car and cdr
+(car '(rose violet daisy buttercup)) ; [0]
+; Clearly, a more reasonable name for the car function would be first and this
+; is often suggested.
+(cdr '(rose violet daisy buttercup)); [1:]
+; Clearly, a more reasonable name for cdr would be rest.
+(car '((lion tiger cheetah)
+       (gazelle antelope zebra)
+       (whale dolphin seal)))
+(cdr '((lion tiger cheetah)
+       (gazelle antelope zebra)
+       (whale dolphin seal)))
+
+                                        ; 7.2 cons
+
+(cons 'pine '(fir oak maple)) ; cons mean construct
+; cons does not change an existing list, but creates a new one.
+
+(cons 'buttercup ())
+(cons 'daisy '(buttercup))
+(cons 'violet '(daisy buttercup))
+
+; 7.2.1 Find the Length of a List: length
+(length '(buttercup))
+(length '(daisy buttercup))
+(length (cons 'violet '(daisy buttercup)))
+; 7.3 nthcdr
+(nthcdr 0 '(pine fir oak maple))
+(nthcdr 3 '(pine fir oak maple))
+
+;; Thus, if it were not defined in C for speed, the definition of nth would be:
+(defun nth (n list)
+  "Returns the Nth element of LIST.
+N counts from zero. If LIST is not that long, nil is returned."
+  (car (nthcdr n list)))
+
+;; извлечь n-ый элемент списка
+(nth 1 '("one" "two" "three"))
+
+; 7.5 setcar
+(setq animals '(antelope giraffe lion tiger))
+(setcar animals 'cat) ; replace first element
+animals
+(setcdr animals '(tiger))
+animals
+
+;; 7.7 Exercise
+;; Construct a list of four birds by evaluating several expressions with cons. Find out
+;; what happens when you cons a list onto itself. Replace the first element of the list
+;; of four birds with a fish. Replace the rest of that list with a list of other fish.
+
+(setq birds (cons 'bird1 '(bird2 bird3 bird4)))
+birds
+(cons birds birds)
+
+(setcar birds 'fish1)
+birds
+(setcdr birds '(fish2 fish3 fish4))
+birds
