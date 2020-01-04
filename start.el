@@ -357,3 +357,61 @@ if arg missiong compare with 56, another case compare with fill column
 (compare-5-5) ;; optional only into interactive session
 
 ;; http://ergoemacs.org/emacs/elisp_optional_params.html
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; 6 Narrowing and Widening
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(The key binding for narrow-to-region is
+C-x n n.)
+(The key binding for widen is C-x n w.)
+(what-line)
+(count-lines)
+
+;; 6.1 The save-restriction Special Form
+(save-excursion
+  (save-restriction ;; зазграничивает скрытие
+    body...))
+
+(save-restriction
+  (widen)
+  (save-excursion
+    body...))
+
+; 6.2 what-line
+(defun what-line ()
+  "Print current line number (in the buffer) of point."
+  (interactive)
+  (save-restriction
+    (widen)
+    (save-excursion
+      (beginning-of-line)
+      (message "Line %d"
+               (1+ (count-lines 1 (point)))))))
+
+(what-line)
+(beginning-of-line)
+(count-lines 1 (point))
+
+;; 6.3 Exercise with Narrowing
+;; Write a function that will display the first 60 characters of the current buffer, even
+;; if you have narrowed the buffer to its latter half so that the first line is inaccessible.
+;; Restore point, mark, and narrowing. For this exercise, you need to use a whole pot-
+;; 70
+;;  Chapter 6: Narrowing and Widening
+;; pourri of functions, including save-restriction, widen, goto-char, point-min,
+;; message, and buffer-substring.
+;; (buffer-substring is a previously unmentioned function you will have to inves-
+;; tigate yourself; or perhaps you will have to use buffer-substring-no-properties
+;; or filter-buffer-substring . . . , yet other functions. Text properties are a fea-
+;; ture otherwise not discussed here. See Section “Text Properties” in The GNU
+;; Emacs Lisp Reference Manual.)
+;; Additionally, do you really need goto-char or point-min? Or can you write
+;; the function without them?
+
+(defun show-first-60 ()
+  "Show first 60."
+  (interactive)
+  (save-restriction
+    (widen)
+    (save-excursion
+      (message (buffer-substring 1 60)))))
