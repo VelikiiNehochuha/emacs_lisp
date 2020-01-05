@@ -557,3 +557,204 @@ kill-ring
 
 
 ;; 9 How Lists are Implemented
+
+(setq bouquet '(rose violet buttercup))
+(setq flowers (cdr bouquet))
+(setq bouquet (cons 'lily bouquet))
+flowers
+bouquet
+(eq (cdr (cdr bouquet)) flowers)
+
+;; 9.1 Symbols as a Chest of Drawers
+
+;; 9.2 Exercise
+;; Set flowers to violet and buttercup. Cons two more flowers on to this list and
+;; set this new list to more-flowers. Set the car of flowers to a fish. What does
+;; the more-flowers list now contain?
+flowers
+(setq more-flowers (cons 'flower2 (cons 'flower1 flowers)))
+(setcar flowers 'newflower)
+flowers
+more-flowers
+
+;; 10 Yanking Text Back
+C-y M-y
+(insert (car kill-ring-yank-pointer))
+
+;; 10.2 The kill-ring-yank-pointer Variable
+
+
+;; 10.3 Exercises with yank and nthcdr
+;; • Using C-h v (describe-variable), look at the value of your kill ring. Add
+;; several items to your kill ring; look at its value again. Using M-y (yank-pop),
+;; move all the way around the kill ring. How many items were in your kill ring?
+;; Find the value of kill-ring-max. Was your kill ring full, or could you have
+;; kept more blocks of text within it?
+;; • Using nthcdr and car, construct a series of expressions to return the first,
+;; second, third, and fourth elements of a list.
+
+(car (nthcdr 1 kill-ring))
+(car (nthcdr 2 kill-ring))
+(car (nthcdr 3 kill-ring))
+(car (nthcdr 4 kill-ring))
+(car (nthcdr 5 kill-ring))
+
+;;  While
+
+(setq empty-list ())
+(setq animals '(gazelle giraffe lion tiger))
+
+(while animals
+  (print animals)
+  (setq animals (cdr animals)))
+
+
+(defun triangle (number-of-rows)
+                                        ; Version with
+                                        ; incrementing counter.
+  "Add up the number of pebbles in a triangle.
+The first row has one pebble, the second row two pebbles,
+the third row three pebbles, and so on.
+The argument is NUMBER-OF-ROWS."
+  (let ((total 0)
+        (row-number 1))
+    (while (<= row-number number-of-rows)
+      (setq total (+ total row-number))
+      (setq row-number (1+ row-number)))
+    total))
+
+(triangle 4)
+(triangle 5)
+
+(defun triangle (number-of-rows)
+  "Add up the number of pebbles in a triangle."
+  (let ((total 0)
+        (number-of-pebbles-in-row number-of-rows))
+    (while (> number-of-pebbles-in-row 0)
+      (setq total (+ total number-of-pebbles-in-row))
+      (setq number-of-pebbles-in-row
+            (1- number-of-pebbles-in-row)))
+    total))
+
+(triangle 5)
+
+(defun triangle (number)
+  "Return sum of numbers 1 through NUMBER inclusive."
+  (let ((total 0))
+    (while (> number 0)
+      (setq total (+ total number))
+      (setq number (1- number)))
+    total))
+(triangle 4)
+
+(defun print-elements-recursively (list)
+  "Print each element of LIST on a line of its own.
+Uses recursion."
+  (when list
+                                        ; do-again-test
+    (print (car list))
+                                        ; body
+    (print-elements-recursively
+                                        ; recursive call
+     (cdr list))))
+                                        ; next-step-expression
+(setq animals '(gazelle giraffe lion tiger))
+(print-elements-recursively animals)
+
+(defun triangle-using-cond (number)
+  (cond ((<= number 0) 0)
+        ((= number 1) 1)
+        ((> number 1)
+         (+ number (triangle-using-cond (1- number))))))
+(triangle-using-cond 5)
+
+;; 11.2 Save your time: dolist and dotimes
+(defun reverse-list-with-dolist (list)
+  "Using dolist, reverse the order of LIST."
+  (let (value) ; make sure list starts empty
+    (dolist (element list value)
+      (setq value (cons element value)))))
+
+(dolist (element animals)
+  (print element))
+
+(dotimes (index 5)
+  (print index))
+
+;; 11.3.6 Recursive Patterns
+
+
+;; 11.4 Looping Exercise
+;; • Write a function similar to triangle in which each row has a value which is
+;; the square of the row number. Use a while loop.
+
+;; • Write a function similar to triangle that multiplies instead of adds the values.
+;; • Rewrite these two functions recursively. Rewrite these functions using cond.
+
+(defun triangle (number-of-rows)
+                                        ; Version with
+                                        ; incrementing counter.
+  "Add up the number of pebbles in a triangle.
+The first row has one pebble, the second row two pebbles,
+the third row three pebbles, and so on.
+The argument is NUMBER-OF-ROWS."
+  (let ((total 0)
+        (row-number 1))
+    (while (<= row-number number-of-rows)
+      (setq total (+ (total (* row-number row-number))
+      (setq row-number (1+ row-number)))
+            total))
+
+(defun triangle-r (number)
+                                        ; Version with
+                                        ; incrementing counter.
+  "Add up the number of pebbles in a triangle.
+The first row has one pebble, the second row two pebbles,
+the third row three pebbles, and so on.
+The argument is NUMBER-OF-ROWS."
+  (if (<= number 1)
+      1
+    (+ (* number number) (triangle-r (1- number)))))
+(triangle-r 4)
+
+;; 1
+;; 4 9 16
+;; 25 36 47
+
+
+;; • Write a function for Texinfo mode that creates an index entry at the beginning
+;; of a paragraph for every ‘@dfn’ within the paragraph. (In a Texinfo file, ‘@dfn’
+;; marks a definition. This book is written in Texinfo.)
+;; Many of the functions you will need are described in two of the previous
+;; chapters, Chapter 8 “Cutting and Storing Text”, page 78, and Chapter 10
+;; “Yanking Text Back”, page 103. If you use forward-paragraph to put the
+;; index entry at the beginning of the paragraph, you will have to use C-h f
+;; (describe-function) to find out how to make the command go backwards.
+;; For more information, see “Indicating Definitions, Commands, etc.” in Texinfo,
+;; The GNU Documentation Format.
+
+;; найдем все вхождения @dnf search
+;; на каждом вхождении
+;;   получаем point
+;;   делаем backward-paragraph
+;;   делаем что-то типа метки, продолжаем поиск
+
+
+(defun search-dnf (buffer)
+  "Search all @dnf into BUFFER!"
+  (interactive
+   (list (read-buffer "Append to buffer: " (other-buffer
+                                            (current-buffer) t))))
+  (let ((append-to (get-buffer buffer)) (pointer 1))
+    (set-buffer append-to)
+    (goto-char 0)
+    (while (> pointer 0)
+      (setq pointer (search-forward "@file" nil t 1))
+      (setq pointer (or pointer 0))
+      (if (> pointer 0)
+          (save-excursion
+            (backward-paragraph)
+            (insert "\n\n#")
+            (insert (number-to-string pointer))
+            (insert "#\n\n"))
+        (message "Finished!")))))
