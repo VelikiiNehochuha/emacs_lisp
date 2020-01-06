@@ -740,6 +740,10 @@ The argument is NUMBER-OF-ROWS."
 ;;   делаем что-то типа метки, продолжаем поиск
 
 
+(let (pointer)
+  (search-forward "@file" pointer t))
+
+(zap-to-char)
 (defun search-dnf (buffer)
   "Search all @dnf into BUFFER!"
   (interactive
@@ -749,12 +753,54 @@ The argument is NUMBER-OF-ROWS."
     (set-buffer append-to)
     (goto-char 0)
     (while (> pointer 0)
-      (setq pointer (search-forward "@file" nil t 1))
-      (setq pointer (or pointer 0))
-      (if (> pointer 0)
-          (save-excursion
-            (backward-paragraph)
-            (insert "\n\n#")
-            (insert (number-to-string pointer))
-            (insert "#\n\n"))
-        (message "Finished!")))))
+      (if (search-forward "@file" nil t)
+          (progn
+            (setq pointer (point))
+            (save-excursion
+              (backward-paragraph)
+              (insert "\n\n#")
+              (insert (number-to-string pointer))
+              (insert "#\n\n")))
+        (setq pointer 0)))))
+
+
+;;; 12 Regular Expression Searches [regexp]
+
+(forward-sentence)
+(re-search-forward sen-end)
+
+(sentence-end)
+(forward-paragraph) ;; !!! source code contains commonly used operations
+
+
+;;; 12.6 Exercises with re-search-forward
+;; • Write a function to search for a regular expression that matches two or more
+;; blank lines in sequence.
+
+
+(defun search-blank-lines ()
+  "Search two (or more) repeated blank lines."
+  (interactive)
+  (if (re-search-forward "\n\n\n[\n]*" nil t)
+      (backward-char 1)))
+
+
+;; • Write a function to search for duplicated words, such as “the the”. See Section
+;; “Syntax of Regular Expressions” in The GNU Emacs Manual, for information
+;; on how to write a regexp (a regular expression) to match a string that is
+;; composed of two identical halves. You can devise several regexps; some are
+;; better than others. The function I use is described in an appendix, along with
+;; several regexps. See Appendix A “the-the Duplicated Words Function”,
+;; page 208.
+
+the the
+
+word
+word
+(defun search-repeated-words ()
+  "Search repeated words, e.g. \"the the\"."
+  (interactive)
+  (re-search-forward "\\(\\w+\\)[\t\n\s\r]+\\1" nil t)) ;; [\t\n\s\r]+\\1
+
+
+;;; 13 Counting via Repetition and Regexps
