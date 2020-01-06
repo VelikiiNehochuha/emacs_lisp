@@ -804,3 +804,95 @@ word
 
 
 ;;; 13 Counting via Repetition and Regexps
+
+(defun count-words-example (beginning end)
+  "Print number of words in region."
+  (interactive "r")
+  (message "Counting words in region...")
+  (save-excursion
+    (goto-char beginning)
+    (let ((count 0))
+      (while (and (< (point) end) (re-search-forward "\\w+\\W*" end t))
+        (setq count (1+ count)))
+      (cond ((zerop count)
+             (message "The region does NOT have any words."))
+            ((= 1 count)
+             (message
+              "The region has 1 word."))
+            (t
+             (message
+              "The region has %d words." count))))))
+
+;; C-g quit infinity loop
+one two         three
+
+
+;; recursively
+
+
+(defun recursive-count-words (region-end)
+  "documentation..."
+  (if (and (< (point) region-end) (re-search-forward "\\w+\\W*" region-end t))
+      (1+ (recursive-count-words region-end))
+    0))
+
+  do-again-test
+  next-step-expression
+  recursive call)
+
+
+(defun count-words-example-r (beginning end)
+  "Print number of words in region."
+  (interactive "r")
+  (message "Counting words in region...")
+  (save-excursion
+    (goto-char beginning)
+
+    (let ((count (recursive-count-words end)))
+
+      (cond ((zerop count)
+             (message "The region does NOT have any words."))
+            ((= 1 count)
+             (message
+              "The region has 1 word."))
+            (t
+             (message
+              "The region has %d words." count))))))
+
+one two three
+
+
+;; 13.3 Exercise: Counting Punctuation
+;; Using a while loop, write a function to count the number of punctuation marks in
+;; a region—period, comma, semicolon, colon, exclamation mark, and question mark.
+;; Do the same using recursion.
+
+(defun recursive-count-nonwords (region-end)
+  "documentation..."
+  (if (and (<= (point) region-end) (re-search-forward "[-;:.!?,]" region-end t))
+      (1+ (recursive-count-nonwords region-end))
+    0))
+
+
+(defun count-nonword (beginning end)
+  "Print number of words in region."
+  (interactive "r")
+  (message "Counting words in region...")
+  (save-excursion
+    (goto-char beginning)
+
+    (let ((count (recursive-count-nonwords end)))
+
+      (cond ((zerop count)
+             (message "The region does NOT have any nonwords."))
+            ((= 1 count)
+             (message
+              "The region has 1 nonword."))
+            (t
+             (message
+              "The region has %d nonwords." count))))))
+
+test,!!!-:; ,,,aapap ! dfsdf?
+
+
+;;; 14 Counting Words in a defun
