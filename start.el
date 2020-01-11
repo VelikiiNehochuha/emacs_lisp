@@ -891,8 +891,105 @@ one two three
             (t
              (message
               "The region has %d nonwords." count))))))
-
+(beginning-of-defun -1)
 test,!!!-:; ,,,aapap ! dfsdf?
 
+;;; Написать python-parser для origami
+;; функции которые можно использовать
+
+(python-nav-backward-block)
+(python-nav-forward-block)
+(python-nav--beginning-of-defun)
+(python-nav--forward-defun)
+
+;; хотим добиться что бы можно было закрывать любой блок с текстом
+;; if else try except class def enum
+;; вначале у нас курсор находится в каком-то блоке
+;; если этот блок if else try except
+;; то закрываем его
+;; иначе закрываем блок между forward-defan beginning-of-defun
+(let (
+      (current-point (point))
+      defun-start block-start defun-end block-end select-start select-end
+      offset acc
+      )
+  (save-excursion
+    (python-nav-forward-block) (python-nav-backward-block)
+    (setq block-start (point)))
+  (save-excursion
+    (python-nav-end-of-defun)
+    (python-nav--beginning-of-defun)
+    (setq defun-start (point)))
+  (save-excursion
+    (python-nav-forward-block)
+    (setq block-end (point)))
+  (save-excursion
+    (python-nav-end-of-defun)
+    (setq defun-end (point)))
+  (if (< defun-start block-start)
+      (progn
+        (setq select-start block-start)
+        (setq select-end block-end))
+    (progn
+      (setq select-start defun-start)
+      (setq select-end defun-end)))
+  (save-excursion
+    (goto-char select-start)
+    (python-nav-end-of-statement)
+    (setq offset (- (point) select-start)))
+  (when (> offset 0)
+    (setq acc (cons (funcall create select-start select-end offset nil) acc)))
+  (reverse acc)
+  )
+
+(< 3 5)
 
 ;;; 14 Counting Words in a defun
+
+
+;;; 17Debugging
+(defun triangle-bugged (number)
+  "Return sum of numbers 1 through NUMBER inclusive."
+  (let ((total 0))
+    (while (> number 0)
+      (setq total (+ total number))
+      (setq number (1= number))) ; Error here.
+    total))
+
+(triangle-bugged 4)
+
+;; M-x debug-on-entry RET triandle-bugged
+;; d for next step
+;; M-x cancel-debug-on-entry RET triangle-bugged RET
+
+;; You can start debug whenever you type C-g (keyboard-quit) by setting the
+;; variable debug-on-quit to t. This is useful for debugging infinite loops.
+
+
+;; or include (debug) into function body
+(defun triangle-bugged (number)
+  "Return sum of numbers 1 through NUMBER inclusive."
+  (let ((total 0))
+    (while (> number 0)
+      (setq total (+ total number))
+      (debug)
+                                        ; Start debugger.
+      (setq number (1= number)))
+                                        ; Error here.
+    total))
+
+;;; 17.4 The edebug Source Level Debugger
+(defun triangle-recursively-bugged (number)
+  "Return sum of numbers 1 through NUMBER inclusive.
+Uses recursion."
+  (if (= number 1)
+      1
+    (+ number
+       (triangle-recursively-bugged
+        (1= number))))) ; Error here.
+(triangle-recursively-bugged 3)
+
+M-x edebug-defun RET
+; If you now press SPC, point will move to the next expression to be executed; the
+; line will look like this:
+;
