@@ -1,5 +1,6 @@
 ;; Exercise 1.1. Below is a sequence of expressions. What is the result printed by the interpreter in response to each expression? Assume that the sequence is to be evaluated in the order in which it is presented.
 
+
 10 ;Value: 10
 (+ 5 3 4) ;Value: 12
 (- 9 1) ;Value: 8
@@ -3835,43 +3836,15 @@ tree3
   (if (= n 0)
       (cons '() elts)
       (let ((left-size (quotient (- n 1) 2)))
-        (display "------------------------------------------------------------")
-        (newline)
-        (display n)
-        (newline)
-        (display "left-size: ")
-        (display left-size)
-        (newline)
         (let ((left-result (partial-tree elts left-size)))
-          (display "left-result: ")
-          (display left-result)
-          (newline)
           (let ((left-tree (car left-result))
                 (non-left-elts (cdr left-result))
                 (right-size (- n (+ left-size 1))))
-            (display "left-tree: ")
-            (display left-tree)
-            (newline)
-            (display "non-left-elts: ")
-            (display non-left-elts)
-            (newline)
-            (display "right-size: ")
-            (display right-size)
-            (newline)
             (let ((this-entry (car non-left-elts))
                   (right-result (partial-tree (cdr non-left-elts)
                                               right-size)))
-              (display "this-entry: ")
-              (display this-entry)
-              (newline)
-              (display "right-result: ")
-              (display right-result)
-              (newline)
               (let ((right-tree (car right-result))
                     (remaining-elts (cdr right-result)))
-                (display "right-tree: ")
-                (display right-tree)
-                (newline)
                 (cons (make-tree this-entry left-tree right-tree)
                       remaining-elts))))))))
 
@@ -3940,7 +3913,9 @@ c
         ((> given-key (entry tree)) (lookup given-key (right-branch tree)))
         ((< given-key (entry tree)) (lookup given-key (left-branch tree)))))
 
-(lookup 7 (list->tree (list 1 3 4 5 9 15)))
+(list->tree (list 1 3 4 5 9 15))
+
+(lookup 5 (list->tree (list 1 3 4 5 9 15)))
 
 ;; Кодирование Хафмана
 
@@ -4606,7 +4581,7 @@ rec5
 (define (magnitude z) (apply-generic 'magnitude z))
 (define (angle z) (apply-generic 'angle z))
 
-(real-part (make-from-real-imag 1 1))
+(make-from-real-imag 1 1)
 (define (add-complex z1 z2)
   (make-from-real-imag (+ (real-part z1) (real-part z2))
                        (+ (imag-part z1) (imag-part z2))))
@@ -4685,6 +4660,10 @@ rec5
               (* (denom x) (numer y))))
   ;; interface to rest of the system
   (define (tag x) (attach-tag 'rational x))
+  (define (real-tag x) (attach-tag 'scheme-real x))
+  (put 'gcos '(rational)
+       (lambda (x) '()
+  
   (put 'add '(rational rational)
        (lambda (x y) (tag (add-rat x y))))
   (put 'sub '(rational rational)
@@ -4696,6 +4675,12 @@ rec5
 
   (put 'make 'rational
        (lambda (n d) (tag (make-rat n d))))
+  (put 'equ? '(rational rational)
+       (lambda (x y) (or
+                 (and (= (numer x) (numer y)) (= (denom x) (denom y)))
+                 (and (= (numer x) (numer y)) (= (numer x) 0)))))
+  (put '=zero? '(rational)
+       (lambda (x) (= (numer x) 0)))
   'done)
 (install-rational-package)
 (define (make-rational n d)
@@ -4743,6 +4728,10 @@ rec5
   (put 'imag-part '(complex) imag-part)
   (put 'magnitude '(complex) magnitude)
   (put 'angle '(complex) angle)
+  (put 'equ? '(complex complex)
+       (lambda (x y) (and (= (real-part x) (real-part y)) (= (imag-part x) (imag-part y)))))
+  (put '=zero? '(complex)
+       (lambda (x) (= (magnitude x) 0)))
   'done)
 (install-complex-package)
 
@@ -4750,7 +4739,7 @@ rec5
   ((get 'make-from-real-imag 'complex) x y))
 (define (make-complex-from-mag-ang r a)
   ((get 'make-from-mag-ang 'complex) r a))
-(make-complex-from-mag-ang 10 0.5)
+(real-part (make-complex-from-real-imag 1 2))
 (add (make-complex-from-mag-ang 10 0.5) (make-complex-from-real-imag 1 2))
 
 ;; Тут мы имеем двух уровневую чичтему тегов (классов) то есть мы работаем с комплексными числами, но при выполнении операций над числами при извлечении магнитуды или другого свойства опираемся на вложенный тип.
@@ -4770,6 +4759,16 @@ rec5
        (lambda (x y) (* x y)))
   (put 'div '(scheme-number scheme-number)
        (lambda (x y) (/ x y)))
+  (put 'equ? '(scheme-number scheme-number)
+       (lambda (x y) (= x y)))
+  (put '=zero? '(scheme-number)
+       (lambda (x) (= x 0)))
+  (put 'make 'scheme-number
+       (lambda (x) (tag x)))
+  ;; following added to Scheme-number package
+  (define (tag x) (attach-tag 'scheme-number x))
+  (put 'exp '(scheme-number scheme-number)
+       (lambda (x y) (tag (expt x y)))) ; using primitive expt
   'done)
 (install-scheme-number-package) ;; установка пакета
 
@@ -4790,3 +4789,3087 @@ rec5
 (add 1 2)
 
 ;; Ex 2.79
+
+(define (equ? x y) (apply-generic 'equ? x y))
+(define (=zero? x) (apply-generic '=zero? x))
+(=zero? (make-number 1))
+(=zero? (make-number 0))
+(equ? 1 2)
+(equ? 1 1)
+(=zero? (make-complex-from-mag-ang 10 1))
+(equ? (make-complex-from-mag-ang 0 1) (make-complex-from-real-imag 0 0))
+(equ? (make-complex-from-real-imag 1 1) (make-complex-from-real-imag 1 1))
+(equ? (make-rational 2 6) (make-rational 1 3))
+(=zero? (make-rational 0 6))
+
+;; Общие операции с различными типами данных
+;; важно не нарушать барьер абстракции, поэтому для каждого типа операции нужно в пакетах предусмотреть методы взаимодействия разных типов
+
+;; это работает но выглядит грамоздко
+;; цена введения нового типа очень высока из-за большого числа сочетаний разных типов, плюс к этому не получится разрабатывать пакеты отдельно от других, теряется важное свойство примесности.
+;; to be included in the complex package
+(define (add-complex-to-schemenum z x)
+  (make-from-real-imag (+ (real-part z) x)
+                       (imag-part z)))
+(put 'add '(complex scheme-number)
+     (lambda (z x) (tag (add-complex-to-schemenum z x))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; приведение типов
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; когда работаем с разными типами, чаще всего мы можем сделать преобразование от одного типа к другому чтобы выполнить операцию над разными типами, такой процесс называется coercion (принудительное преобразование типов)
+
+(define (scheme-number->complex n)
+  (make-complex-from-real-imag (contents n) 0))
+
+;; отдельная таблица для приведения типов
+
+(define *op-coercion-table* (make-hash-table))
+
+(define (put-coercion type1 type2 proc)
+  (hash-table/put! *op-coercion-table* (list type1 type2) proc))
+
+(define (get-coercion type1 type2)
+  (hash-table/get *op-coercion-table* (list type1 type2) #f))
+
+(put-coercion 'scheme-number 'complex scheme-number->complex)
+;; (get-coercion 'scheme-number 'complex)
+
+
+(define (apply-generic op . args)
+  (let ((type-tags (map type-tag args)))
+    (let ((proc (get op type-tags)))
+      (if proc
+          (apply proc (map contents args))
+          (if (= (length args) 2)
+              (let ((type1 (car type-tags))
+                    (type2 (cadr type-tags))
+                    (a1 (car args))
+                    (a2 (cadr args)))
+                (if (equal? type1 type2)
+                    (error "No method for these types"
+                           (list op type-tags))
+                    (let ((t1->t2 (get-coercion type1 type2))
+                          (t2->t1 (get-coercion type2 type1)))
+                      (cond (t1->t2
+                             (apply-generic op (t1->t2 a1) a2))
+                            (t2->t1
+                             (apply-generic op a1 (t2->t1 a2)))
+                            (else
+                             (error "No method for these types"
+                                    (list op type-tags)))))))
+                (error "No method for these types"
+                       (list op type-tags)))))))
+(add 3 (make-complex-from-real-imag 1 1))
+
+
+(define (scheme-number->scheme-number n) n)
+(define (complex->complex z) z)
+(put-coercion 'scheme-number 'scheme-number
+              scheme-number->scheme-number)
+(put-coercion 'complex 'complex complex->complex)
+(add 1 2)
+(add (make-complex-from-real-imag 1 1) (make-complex-from-real-imag 1 1))
+
+(define (exp x y) (apply-generic 'exp x y))
+
+;; рекурсивный вызов apply-generic
+(exp (make-complex-from-real-imag 1 1) (make-complex-from-real-imag 1 1))
+(exp 2 4)
+
+
+;; Ex. 2.82
+
+
+(define (map-args args type-tags cdr-type-tags)
+  (define (try-coercion args type-list target-type res)
+    (if (null? type-list)
+        res
+        (if (equal? (car type-list) target-type)
+            (try-coercion
+             (cdr args)
+             (cdr type-list)
+             target-type
+             (cons (car args) res))
+            (let ((t2->t1 (get-coercion (car type-list) target-type)))
+              (if (not t2->t1)
+                  false
+                  (try-coercion
+                   (cdr args)
+                   (cdr type-list)
+                   target-type (cons (t2->t1 (car args)) res)))))))
+  (cond ((null? cdr-type-tags) (error "No method for these types"))
+        (else
+         (let ((mapped-args (try-coercion args type-tags (car cdr-type-tags) '())))
+           (if (not mapped-args)
+               (map-args args type-tags (cdr cdr-type-tags))
+               mapped-args)))))
+
+
+(define (apply-generic op . args)
+  (let ((type-tags (map type-tag args)))
+    (let ((proc (get op type-tags)))
+      (if (not proc)
+          (let ((mapped-args (map-args args type-tags type-tags)))
+            (if (not mapped-args)
+                (error "No method for these types" (list op type-tags))
+                (let ((mapped-type-tags (map type-tag mapped-args)))
+                  (let ((proc (get op mapped-type-tags)))
+                    (if (not proc)
+                        (error "No method for these types" (list op type-tags))
+                        (apply proc (map contents mapped-args)))))))
+          (apply proc (map contents args))
+          ))))
+
+(get 'add '(complex complex))
+(define (add x y) (apply-generic 'add x y))
+(make-number 1)
+(make-complex-from-real-imag 1 1)
+(add (make-number 1) (make-number 1))
+(add (make-number 1) (make-complex-from-real-imag 1 1))
+
+;; Ex. 2.83.
+
+;; можно использовать таблицу
+
+;; тут поменял что бы только целые можно было создавать без make
+
+(define (attach-tag type-tag contents)
+  (cons type-tag contents))
+
+(define (type-tag datum)
+  (cond ((pair? datum) (car datum))
+        (else (error "Bad tagged datum -- TYPE-TAG" datum))))
+(define (contents datum)
+  (cond ((pair? datum) (cdr datum))
+        (else (error "Bad tagged datum -- CONTENTS" datum))))
+
+;; добавляем пакет с реальными числами
+(define (install-scheme-real-package)
+  (define (tag x) (attach-tag 'scheme-real x))
+  (put 'add '(scheme-real scheme-real)
+       (lambda (x y) (tag (+ x y))))
+  (put 'sub '(scheme-real scheme-real)
+       (lambda (x y) (tag (- x y))))
+  (put 'mul '(scheme-real scheme-real)
+       (lambda (x y) (tag (* x y))))
+  (put 'div '(scheme-real scheme-real)
+       (lambda (x y) (tag (/ x y))))
+  (put 'equ? '(scheme-real scheme-real)
+       (lambda (x y) (= x y)))
+  (put '=zero? '(scheme-real)
+       (lambda (x) (= x 0)))
+  (put 'make 'scheme-real
+       (lambda (x) (tag x)))
+  ;; following added to Scheme-number package
+  (put 'exp '(scheme-real scheme-real)
+       (lambda (x y) (tag (expt x y))))
+  'done)
+(install-scheme-real-package) ;; установка пакета
+
+(define (install-scheme-number-package)
+  (define (tag x) (attach-tag 'scheme-number x))
+  (put 'add '(scheme-number scheme-number)
+       (lambda (x y) (tag (+ x y))))
+  (put 'sub '(scheme-number scheme-number)
+       (lambda (x y) (tag (- x y))))
+  (put 'mul '(scheme-number scheme-number)
+       (lambda (x y) (tag (* x y))))
+  (put 'div '(scheme-number scheme-number)
+       (lambda (x y) (tag (/ x y))))
+  (put 'equ? '(scheme-number scheme-number)
+       (lambda (x y) (= x y)))
+  (put '=zero? '(scheme-number)
+       (lambda (x) (= x 0)))
+  (put 'make 'scheme-number
+       (lambda (x) (tag x)))
+  ;; following added to Scheme-number package
+  (put 'exp '(scheme-number scheme-number)
+       (lambda (x y) (tag (expt x y)))) ; using primitive expt
+  (put 'negation ('scheme-number)
+       (lambda (x) (tag (- x))))
+  'done)
+(install-scheme-number-package) ;; установка пакета
+(- 1)
+(define x (- 1))
+(- x)
+(define (install-coercion-package)
+  (define (numer x) (car x))
+  (define (denom x) (cdr x))
+  (define (make-rational n d)
+    ((get 'make 'rational) n d))
+  (define (make-complex-from-real-imag x y)
+    ((get 'make-from-real-imag 'complex) x y))
+  (define (make-real x)
+    ((get 'make 'scheme-real) x))
+  ;; interface
+  (put 'raise '(scheme-number)
+       (lambda (x) (make-rational x 1)))
+  (put 'raise '(rational)
+       (lambda (x) (make-real (/ (numer x) (denom x)))))
+  (put 'raise '(scheme-real)
+       (lambda (x) (make-complex-from-real-imag x 0)))
+  (put 'raise '(complex)
+       (lambda (x) (error "complex can't raise")))
+  ;; project
+  (put 'project '(rational)
+       (lambda (x) (make-number (round (/ (number x) (denom x))))))
+  (put 'project '(scheme-real)
+       (lambda (x) (make-number (round x))))
+  (put 'project '(complex)
+       (lambda (x) (make-real (real-part x))))
+  'done)
+
+(install-coercion-package)
+(define (raise x)
+  (apply-generic 'raise x))
+(define (project x)
+  (apply-generic 'project x))
+
+(define (drop x)
+  (let ((pproc (get 'project (map type-tag (list x)))))
+    (if (not pproc)
+        x
+        (let ((p (project x)))
+          (if (equ? (raise p) x)
+              p
+              x)))))
+(define (drop-max x)
+  (let ((type-before (type-tag x))
+        (new-value (drop x)))
+    (if (equal? type-before (type-tag new-value))
+        x
+        (drop-max new-value))))
+
+
+(drop-max (make-real 1.))
+(drop-max (make-complex-from-real-imag 1 0))
+
+(drop (make-real 1.0))
+
+
+(raise (raise (raise (make-number 1))))
+(raise (make-number 1))
+(raise 1)
+(define (make-number x)
+  ((get 'make 'scheme-number) x))
+(define (make-real x)
+  ((get 'make 'scheme-real) x))
+(add (make-real 1.5) (make-real 2.2))
+
+(add (make-real 1) (make-number 2))
+
+
+;; Упр 2.84
+
+;; табличка с сравнением типов
+(define *op-compare-types-table* (make-hash-table))
+(define (put-type-value type value)
+  (hash-table/put! *op-compare-types-table* (list type) value))
+(define (get-type-value type)
+  (hash-table/get *op-compare-types-table* (list type) #f))
+(define (install-compare-types-package)
+  (put-type-value 'scheme-number 1)
+  (put-type-value 'rational 5)
+  (put-type-value 'scheme-real 10)
+  (put-type-value 'complex 15)
+  'done)
+(install-compare-types-package)
+
+;; процедура сравнения типов
+(define (type1>type2 type1 type2)
+  (let ((value1 (get-type-value type1))
+        (value2 (get-type-value type2)))
+    (> value1 value2)))
+
+
+(define (map-args args type-tags)
+  (define (find-max-value-type types)
+    (define (iter-types types value)
+      (if (null? types)
+          value
+          (if (type1>type2 (car types) value)
+              (iter-types (cdr types) (car types))
+              (iter-types (cdr types) value))))
+    (iter-types types (car types)))
+  (define (raise-until-type arg target-type)
+    (if (equal? (type-tag arg) target-type)
+        arg
+        (raise-until-type (raise arg) target-type)))
+  (define (try-coercion args type-list target-type res)
+    (if (null? args)
+        res
+        (if (equal? (car type-list) target-type)
+            (try-coercion (cdr args) (cdr type-list) target-type (cons (car args) res))
+            (try-coercion (cdr args) (cdr type-list) target-type (cons (raise-until-type (car args) target-type) res)))))
+  (let ((target-type (find-max-value-type type-tags)))
+    (let ((mapped-args (try-coercion args type-tags target-type '())))
+      (if (not mapped-args)
+          (error "No coercion for these types")
+          mapped-args))))
+
+
+(define (apply-generic op . args)
+  (let ((type-tags (map type-tag args)))
+    (let ((proc (get op type-tags)))
+      (if (not proc)
+          (let ((mapped-args (map-args args type-tags)))
+            (if (not mapped-args)
+                (error "No method for these types" (list op type-tags))
+                (let ((mapped-type-tags (map type-tag mapped-args)))
+                  (let ((proc (get op mapped-type-tags)))
+                    (if (not proc)
+                        (error "No method for these types" (list op type-tags))
+                        (apply proc (map contents mapped-args)))))))
+          (apply proc (map contents args))
+          ))))
+
+;; Ex. 2.85
+
+(define (install-coercion-package)
+  (define (numer x) (car x))
+  (define (denom x) (cdr x))
+  (define (make-rational n d)
+    ((get 'make 'rational) n d))
+  (define (make-complex-from-real-imag x y)
+    ((get 'make-from-real-imag 'complex) x y))
+  (define (make-real x)
+    ((get 'make 'scheme-real) x))
+  (define (make-number x)
+    ((get 'make 'scheme-number) x))
+  ;; interface
+  (put 'raise '(scheme-number)
+       (lambda (x) (make-rational x 1)))
+  (put 'raise '(rational)
+       (lambda (x) (make-real (/ (numer x) (denom x)))))
+  (put 'raise '(scheme-real)
+       (lambda (x) (make-complex-from-real-imag x (make-number 0))))
+  (put 'raise '(complex)
+       (lambda (x) (error "complex can't raise")))
+  ;; project
+  (put 'project '(rational)
+       (lambda (x) (make-number (round (/ (numer x) (denom x))))))
+  (put 'project '(scheme-real)
+       (lambda (x) (make-number (round x))))
+  (put 'project '(complex)
+       (lambda (x) (make-real (real-part x))))
+  'done)
+
+(install-coercion-package)
+
+(define (apply-generic op . args)
+  (let ((type-tags (map type-tag args)))
+    (let ((proc (get op type-tags)))
+      (if proc
+          (apply proc (map contents args))
+          (error
+            "No method for these types -- APPLY-GENERIC"
+            (list op type-tags))))))
+(define (real-part z)
+  (apply-generic 'real-part z))
+(define (imag-part z) (apply-generic 'imag-part z))
+(define (magnitude z) (apply-generic 'magnitude z))
+(define (angle z) (apply-generic 'angle z))
+(define (raise x)
+  (apply-generic 'raise x))
+(define (project x)
+  (apply-generic 'project x))
+
+
+(define (drop x)
+  (define (raise-until-type arg target-type)
+    (if (equal? (type-tag arg) target-type)
+        arg
+        (raise-until-type (raise arg) target-type)))
+
+  (let ((pproc (get 'project (map type-tag (list x)))))
+    (if (not pproc)
+        x
+        (let ((p (project x)))
+          (if (equ? (raise-until-type p (type-tag x)) x)
+              p
+              x)))))
+(define (drop-max x)
+  (let ((type-before (type-tag x))
+        (new-value (drop x)))
+    (if (equal? type-before (type-tag new-value))
+        x
+        (drop-max new-value))))
+
+
+(define (map-args args type-tags)
+  (define (find-max-value-type types)
+    (define (iter-types types value)
+      (if (null? types)
+          value
+          (if (type1>type2 (car types) value)
+              (iter-types (cdr types) (car types))
+              (iter-types (cdr types) value))))
+    (iter-types types (car types)))
+  (define (raise-until-type arg target-type)
+    (if (equal? (type-tag arg) target-type)
+        arg
+        (raise-until-type (raise arg) target-type)))
+  (define (try-coercion args type-list target-type res)
+    (if (null? args)
+        res
+        (if (equal? (car type-list) target-type)
+            (try-coercion (cdr args) (cdr type-list) target-type (cons (car args) res))
+            (try-coercion (cdr args) (cdr type-list) target-type (cons (raise-until-type (car args) target-type) res)))))
+  (let ((target-type (find-max-value-type type-tags)))
+    (let ((mapped-args (try-coercion args type-tags target-type '())))
+      (if (not mapped-args)
+          (error "No coercion for these types")
+          mapped-args))))
+
+
+(define (apply-generic-simplified op . args)
+  (define (simplified-result res)
+    (cond ((boolean? res) res)
+          (else (drop-max res))))
+  ;; (define (simplified-result res)
+  ;;   res)
+
+  (let ((type-tags (map type-tag args)))
+    (let ((proc (get op type-tags)))
+      (if (not proc)
+          (let ((mapped-args (map-args args type-tags)))
+            (if (not mapped-args)
+                (error "No method for these types" (list op type-tags))
+                (let ((mapped-type-tags (map type-tag mapped-args)))
+                  (let ((proc (get op mapped-type-tags)))
+                    (if (not proc)
+                        (error "No method for these types" (list op type-tags))
+                        (simplified-result (apply proc (map contents mapped-args))))))))
+          (simplified-result (apply proc (map contents args)))
+          ))))
+
+(define (add x y) (apply-generic-simplified 'add x y))
+(define (sub x y) (apply-generic-simplified 'sub x y))
+(define (mul x y) (apply-generic-simplified 'mul x y))
+(define (div x y) (apply-generic-simplified 'div x y))
+(make-number 1)
+
+(real-part (make-complex-from-real-imag 1 1))
+(drop (make-complex-from-real-imag 1 0))
+(drop (make-real 1))
+(add (make-complex-from-real-imag 1 -1) (make-complex-from-real-imag 1 1))
+
+;; Ex 2.86
+
+
+(define (install-complex-package)
+  ;; imported procedures from rectangular and polar packages
+  (define (make-from-real-imag x y)
+    ((get 'make-from-real-imag 'rectangular) x y))
+  (define (make-from-mag-ang r a)
+    ((get 'make-from-mag-ang 'polar) r a))
+  ;; internal procedures
+  (define (add-complex z1 z2)
+    (make-from-real-imag (add (real-part z1) (real-part z2))
+                         (add (imag-part z1) (imag-part z2))))
+  (define (sub-complex z1 z2)
+    (make-from-real-imag (sub (real-part z1) (real-part z2))
+                         (sub (imag-part z1) (imag-part z2))))
+  (define (mul-complex z1 z2)
+    (display (magnitude z1))
+    (display (mul (magnitude z1) (magnitude z2)))
+    (newline)
+    (display (add (angle z1) (angle z2)))
+    (newline)
+    (display (make-from-mag-ang (mul (magnitude z1) (magnitude z2))
+                                (add (angle z1) (angle z2))))
+    (make-from-mag-ang (mul (magnitude z1) (magnitude z2))
+                       (add (angle z1) (angle z2))))
+  (define (div-complex z1 z2)
+    (make-from-mag-ang (div (magnitude z1) (magnitude z2))
+                       (sub (angle z1) (angle z2))))
+  ;; interface to rest of the system
+  (define (tag z) (attach-tag 'complex z))
+  (put 'add '(complex complex)
+       (lambda (z1 z2) (tag (add-complex z1 z2))))
+  (put 'sub '(complex complex)
+       (lambda (z1 z2) (tag (sub-complex z1 z2))))
+  (put 'mul '(complex complex)
+       (lambda (z1 z2) (tag (mul-complex z1 z2))))
+  (put 'div '(complex complex)
+       (lambda (z1 z2) (tag (div-complex z1 z2))))
+  (put 'make-from-real-imag 'complex
+       (lambda (x y) (tag (make-from-real-imag x y))))
+  (put 'make-from-mag-ang 'complex
+       (lambda (r a) (tag (make-from-mag-ang r a))))
+  (put 'real-part '(complex) real-part)
+  (put 'imag-part '(complex) imag-part)
+  (put 'magnitude '(complex) magnitude)
+  (put 'angle '(complex) angle)
+  (put 'equ? '(complex complex)
+       (lambda (x y) (and (equ? (real-part x) (real-part y)) (equ? (imag-part x) (imag-part y)))))
+  (put '=zero? '(complex)
+       (lambda (x) (=zero? (magnitude x))))
+  'done)
+(install-complex-package)
+
+
+(real-part (make-complex-from-real-imag 1 1))
+(magnitude (make-complex-from-real-imag 1 1))
+
+
+(define complex1 (make-complex-from-real-imag (make-rational 1 2) (make-rational 3 4)))
+(define complex2 (make-complex-from-real-imag (make-rational 1 2) (make-rational 3 4)))
+(real-part complex1)
+(imag-part complex1)
+(imag-part (make-from-real-imag (make-number 1) (make-rational 3 2)))
+(add complex1 complex2)
+(magnitude complex1)
+(mul complex1 complex2)
+
+(sqrt 1.2)
+
+;; тут у нас чаще всего получаются scheme-real
+;; поэтому мы приводим к этому типу
+;; иначе во всех пакетах у нас перемешаются разные типы что плохо влияет на разработку пакетов отдельно
+
+(define (operation-with-raise-to-real op x)
+  (define (tag z) (attach-tag 'scheme-real z))
+  (if (equal? (type-tag x) 'rational)
+      (operation-with-raise-to-real op (raise x))
+      (tag (op (contents x)))))
+
+(define (gsqrt x)
+  (operation-with-raise-to-real sqrt x))
+
+(define (cosine x)
+  (operation-with-raise-to-real cos x))
+
+(define (sine x)
+  (operation-with-raise-to-real sin x))
+
+(define (atangens x)
+  (operation-with-raise-to-real atan x))
+
+
+(define (install-rectangular-package)
+  ;; internal procedures
+  (define (real-part z) (car z))
+  (define (imag-part z) (cdr z))
+  (define (make-from-real-imag x y) (cons x y))
+  (define (magnitude z)
+    (gsqrt (add (mul (real-part z) (real-part z))
+                      (mul (imag-part z) (imag-part z)))))
+  (define (angle z)
+    (atangens (div (imag-part z) (real-part z))))
+  (define (make-from-mag-ang r a) 
+    (cons (mul r (sine a)) (mul r (sine a))))
+  ;; interface to the rest of the system
+  (define (tag x) (attach-tag 'rectangular x))
+  (put 'real-part '(rectangular) real-part)
+  (put 'imag-part '(rectangular) imag-part)
+  (put 'magnitude '(rectangular) magnitude)
+  (put 'angle '(rectangular) angle)
+  (put 'make-from-real-imag 'rectangular 
+       (lambda (x y) (tag (make-from-real-imag x y))))
+  (put 'make-from-mag-ang 'rectangular 
+       (lambda (r a) (tag (make-from-mag-ang r a))))
+  'done)
+(install-rectangular-package)
+
+
+(define (install-rational-package)
+  ;; internal procedures
+  (define (numer x) (car x))
+  (define (denom x) (cdr x))
+  (define (make-rat n d)
+    (let ((g (gcd n d)))
+      (cons (/ n g) (/ d g))))
+  (define (add-rat x y)
+    (make-rat (+ (* (numer x) (denom y))
+                 (* (numer y) (denom x)))
+              (* (denom x) (denom y))))
+  (define (sub-rat x y)
+    (make-rat (- (* (numer x) (denom y))
+                 (* (numer y) (denom x)))
+              (* (denom x) (denom y))))
+  (define (mul-rat x y)
+    (make-rat (* (numer x) (numer y))
+              (* (denom x) (denom y))))
+  (define (div-rat x y)
+    (make-rat (* (numer x) (denom y))
+              (* (denom x) (numer y))))
+  ;; interface to rest of the system
+  (define (tag x) (attach-tag 'rational x))
+  (define (real-tag x) (attach-tag 'scheme-real x))
+
+  (put 'add '(rational rational)
+       (lambda (x y) (tag (add-rat x y))))
+  (put 'sub '(rational rational)
+       (lambda (x y) (tag (sub-rat x y))))
+  (put 'mul '(rational rational)
+       (lambda (x y) (tag (mul-rat x y))))
+  (put 'div '(rational rational)
+       (lambda (x y) (tag (div-rat x y))))
+
+  (put 'make 'rational
+       (lambda (n d) (tag (make-rat n d))))
+  (put 'equ? '(rational rational)
+       (lambda (x y) (or
+                 (and (= (numer x) (numer y)) (= (denom x) (denom y)))
+                 (and (= (numer x) (numer y)) (= (numer x) 0)))))
+  (put '=zero? '(rational)
+       (lambda (x) (= (numer x) 0)))
+  'done)
+(install-rational-package)
+
+(define (install-polar-package)
+  ;; internal procedures
+  (define (magnitude z) (car z))
+  (define (angle z) (cdr z))
+  (define (make-from-mag-ang r a) (cons r a))
+  (define (real-part z)
+    (mul (magnitude z) (cosine (angle z))))
+  (define (imag-part z)
+    (mul (magnitude z) (sine (angle z))))
+  (define (make-from-real-imag x y) 
+    (cons (gsqrt (add (mul x x) (mul y y)))
+          (atan (div y x))))
+  ;; interface to the rest of the system
+  (define (tag x) (attach-tag 'polar x))
+  (put 'real-part '(polar) real-part)
+  (put 'imag-part '(polar) imag-part)
+  (put 'magnitude '(polar) magnitude)
+  (put 'angle '(polar) angle)
+  (put 'make-from-real-imag 'polar
+       (lambda (x y) (tag (make-from-real-imag x y))))
+  (put 'make-from-mag-ang 'polar 
+       (lambda (r a) (tag (make-from-mag-ang r a))))
+  'done)
+(install-polar-package)
+
+
+(make-from-real-imag (make-number 1) (make-number 3))
+(make-from-real-imag (make-number 2) (make-number 4))
+
+
+;; 2.5.3 Пример. Символьная алгебра.
+
+;; Подзадача работа с полниомами
+;; Упражнение 2.87
+
+(define (install-polynomial-package)
+  ;; internal procedures
+  ;; representation of poly
+  (define (make-poly variable term-list)
+    (cons variable term-list))
+  (define (variable p) (car p))
+  (define (term-list p) (cdr p))
+  ;; <procedures same-variable? and variable? from section 2.3.2>
+  (define (variable? x) (symbol? x))
+  (define (same-variable? v1 v2)
+    (and (variable? v1) (variable? v2) (eq? v1 v2)))
+  ;; representation of terms and term lists
+  ;; ((100 1) (2 2) (0 1)) = x^100 + 2x^2 + 1
+
+  ;; procedurs on poly
+  (define (add-poly p1 p2)
+    (if (same-variable? (variable p1) (variable p2))
+        (make-poly (variable p1)
+                   (add (term-list p1)
+                        (term-list p2)))
+        (error "Polys not in same var -- ADD-POLY"
+               (list p1 p2))))
+  (define (mul-poly p1 p2)
+    (if (same-variable? (variable p1) (variable p2))
+        (make-poly (variable p1)
+                   (mul (term-list p1)
+                        (term-list p2)))
+        (error "Polys not in same var -- MUL-POLY"
+               (list p1 p2))))
+
+  ;; interface to rest of the system
+  (define (tag p) (attach-tag 'polynomial p))
+  (put 'add '(polynomial polynomial)
+       (lambda (p1 p2) (tag (add-poly p1 p2))))
+  (put 'sub '(polynomial polynomial)
+       (lambda (p1 p2) (tag (add-poly p1 (contents (negation (tag p2)))))))
+  (put 'mul '(polynomial polynomial)
+       (lambda (p1 p2) (tag (mul-poly p1 p2))))
+  (put 'make 'polynomial
+       (lambda (var terms) (tag (make-poly var terms))))
+  (put '=zero? '(polynomial)
+       (lambda (x) (=zero? (term-list x))))
+  (put 'negation '(polynomial)
+       (lambda (p) (tag (make-poly (variable p) (negation (term-list p))))))
+  'done)
+
+(install-polynomial-package)
+
+;; выключаем теги для обычных чисел
+(define (attach-tag type-tag contents)
+  (if (number? contents)
+      (cons 'scheme-number contents)
+      (cons type-tag contents)))
+(define (type-tag datum)
+  (cond ((number? datum) 'scheme-number)
+        ((pair? datum) (car datum))
+        (else (error "Bad tagged datum -- TYPE-TAG" datum))))
+(define (contents datum)
+  (cond ((number? datum) datum)
+        ((pair? datum) (cdr datum))
+        (else (error "Bad tagged datum -- CONTENTS" datum))))
+
+(define (make-polynomial var terms)
+  ((get 'make 'polynomial) var terms))
+
+
+
+(define (install-scheme-number-package)
+  (define (tag x) (attach-tag 'scheme-number x))
+  (put 'add '(scheme-number scheme-number)
+       (lambda (x y) (+ x y)))
+  (put 'sub '(scheme-number scheme-number)
+       (lambda (x y) (- x y)))
+  (put 'mul '(scheme-number scheme-number)
+       (lambda (x y) (* x y)))
+  (put 'div '(scheme-number scheme-number)
+       (lambda (x y) (/ x y)))
+  (put 'equ? '(scheme-number scheme-number)
+       (lambda (x y) (= x y)))
+  (put '=zero? '(scheme-number)
+       (lambda (x) (= x 0)))
+  (put 'make 'scheme-number
+       (lambda (x) x))
+  ;; following added to Scheme-number package
+  (put 'exp '(scheme-number scheme-number)
+       (lambda (x y) (expt x y))) ; using primitive expt
+  (put 'negation '(scheme-number)
+       (lambda (x) (- x)))
+  'done)
+(install-scheme-number-package) ;; установка пакета
+(add 1 2)
+(negation 1)
+(define (negation x) (apply-generic 'negation x))
+(define (=zero? x) (apply-generic '=zero? x))
+(define (add x y) (apply-generic 'add x y))
+(define (sub x y) (apply-generic 'sub x y))
+(define (mul x y) (apply-generic 'mul x y))
+
+
+;; Ex. 2.89, 2.90
+
+
+;; ((100 1) (2 2) (0 1)) - x^100 + 2x^2 + 1
+
+(define (install-polynomial-sparse-package)
+  (define (tag x) (attach-tag 'sparse x))
+  (define (the-empty-termlist) '())
+  (define (first-term term-list) (car term-list))
+  (define (rest-terms term-list) (cdr term-list))
+  (define (empty-termlist? term-list) (null? term-list))
+  (define (make-term order coeff) (list order coeff))
+  (define (order term) (car term))
+  (define (coeff term) (cadr term))
+  (define (negation-term-list L1)
+    (if (empty-termlist? L1)
+        L1
+        (cons (make-term (order (first-term L1)) (negation (coeff (first-term L1)))) (negation-term-list (rest-terms L1)))))
+
+  (define (adjoin-term term term-list)
+    (if (=zero? (coeff term))
+        term-list
+        (cons term term-list)))
+  (define (add-terms L1 L2)
+    (cond ((empty-termlist? L1) L2)
+          ((empty-termlist? L2) L1)
+          (else
+           (let ((t1 (first-term L1)) (t2 (first-term L2)))
+             (cond ((> (order t1) (order t2))
+                    (adjoin-term
+                     t1 (add-terms (rest-terms L1) L2)))
+                   ((< (order t1) (order t2))
+                    (adjoin-term
+                     t2 (add-terms L1 (rest-terms L2))))
+                   (else
+                    (adjoin-term
+                     (make-term (order t1)
+                                (add (coeff t1) (coeff t2)))
+                     (add-terms (rest-terms L1)
+                                (rest-terms L2)))))))))
+
+  (define (sub-terms L1 L2)
+    (add-terms L1 (negation-term-list L2)))
+
+  (define (mul-terms L1 L2)
+    (if (empty-termlist? L1)
+        (the-empty-termlist)
+        (add-terms (mul-term-by-all-terms (first-term L1) L2)
+                   (mul-terms (rest-terms L1) L2))))
+  (define (mul-term-by-all-terms t1 L)
+    (if (empty-termlist? L)
+        (the-empty-termlist)
+        (let ((t2 (first-term L)))
+          (adjoin-term
+           (make-term (+ (order t1) (order t2))
+                      (mul (coeff t1) (coeff t2)))
+           (mul-term-by-all-terms t1 (rest-terms L))))))
+
+
+  (define (div-terms L1 L2)
+    (if (empty-termlist? L1)
+        (list (the-empty-termlist) (the-empty-termlist))
+        (let ((t1 (first-term L1))
+              (t2 (first-term L2)))
+          (if (> (order t2) (order t1))
+              (list (the-empty-termlist) L1)
+              (let ((new-c (div (coeff t1) (coeff t2)))
+                    (new-o (- (order t1) (order t2))))
+                (let ((rest-of-result
+                       (sub-terms L1 (mul-terms (list (make-term new-o new-c)) L2))))
+
+                  (let ((result (div-terms rest-of-result L2)))
+                    (list (add-terms (list (make-term new-o new-c)) (car result)) (cdr result)))))))))
+
+  (define (all-zero? L1)
+    (cond ((empty-termlist? L1) true)
+          ((and (=zero? (coeff (first-term L1))) (all-zero? (rest-terms L1))) true)
+          (else false)))
+
+  (put 'negation '(sparse)
+       (lambda (p) (tag (negation-term-list p))))
+  (put 'make 'sparse
+       (lambda (terms) (tag terms)))
+  (put '=zero? '(sparse)
+       (lambda (terms) (all-zero? terms)))
+  (put 'add '(sparse sparse)
+       (lambda (terms1 terms2) (tag (add-terms terms1 terms2))))
+  (put 'sub '(sparse sparse)
+       (lambda (terms1 terms2) (tag (sub-terms terms1 terms2))))
+  (put 'mul '(sparse sparse)
+       (lambda (terms1 terms2) (tag (mul-terms terms1 terms2))))
+  (put 'div '(sparse sparse)
+       (lambda (terms1 terms2) (tag (div-terms terms1 terms2))))
+  'done)
+
+(install-polynomial-sparse-package)
+(put 'add-terms '(sparce sparce) false)
+(define (add x y) (apply-generic 'add x y))
+(define (mul x y) (apply-generic 'mul x y))
+
+(define (make-sparse-terms terms)
+  ((get 'make 'sparse) terms))
+
+(define sparse-terms (make-sparse-terms '((2 1) (1 1) (0 1))))
+sparce-terms
+((get 'add '(sparse sparse)) '((2 1) (1 1) (0 1)) '((2 1) (1 1) (0 1)))
+(add sparse-terms sparse-terms)
+(sub sparse-terms sparse-terms)
+(mul sparse-terms sparse-terms)
+(div sparse-terms sparse-terms)
+(div sparse-terms (make-sparse-terms '((1 1) (0 1))))
+(negation (make-sparce-terms '((2 1) (1 1) (0 1))))
+(=zero? sparce-terms)
+(=zero? (make-sparse-terms '((1 0) (2 0) (0 0))))
+
+
+
+;; (1 2 0 3 -2 -5)       - x^5 + 2x^4 + 0x^3 + 3x^2 - 2x -5
+
+
+(define (install-polynomial-dense-package)
+  (define (tag x) (attach-tag 'dense x))
+  (define (the-empty-termlist) '())
+  (define (first-term term-list) (car term-list))
+  (define (rest-terms term-list) (cdr term-list))
+  (define (empty-termlist? term-list) (null? term-list))
+  ;; (define (make-term order coeff) (list order coeff))
+  (define (first-coeff term-list) (car term-list))
+  (define (first-order term-list) (- (length term-list) 1))
+  (define (negation-term-list L1)
+    (if (empty-termlist? L1)
+        L1
+        (cons (negation (first-term L1)) (negation-term-list (rest-terms L1)))))
+  (define (add-terms L1 L2)
+    (display L1)
+    (define (sum-terms L1 L2)
+      (cond ((empty-termlist? L1) L2)
+            ((empty-termlist? L2) L1)
+            (else
+             (cons (+ (first-term L1) (first-term L2)) (sum-terms (rest-terms L1) (rest-terms L2))))))
+    (reverse (sum-terms (reverse L1) (reverse L2))))
+
+  (define (mul-terms L1 L2)
+    (if (empty-termlist? L1)
+        (the-empty-termlist)
+        (add-terms (mul-term-by-all-terms L1 L2)
+                   (mul-terms (rest-terms L1) L2))))
+
+  (define (mul-term-by-all-terms L1 L2)
+    (define (mul-coeff L constant)
+      (if (empty-termlist? L)
+          (the-empty-termlist)
+          (cons (* (first-term L) constant) (mul-coeff (rest-terms L) constant))))
+    (define (create-n-zeroes n)
+      (if (> n 0)
+          (cons 0 (create-n-zeroes (- n 1)))
+          '()))
+    (if (empty-termlist? L2)
+        (the-empty-termlist)
+        (let ((coeff (first-coeff L1))
+              (order (first-order L1)))
+          (append (mul-coeff L2 coeff) (create-n-zeroes order)))))
+
+  (define (all-zero? L1)
+    (cond ((empty-termlist? L1) true)
+          ((and (=zero? (first-term L1)) (all-zero? (rest-terms L1))) true)
+          (else false)))
+
+  (put 'negation '(dense)
+       (lambda (p) (tag (negation-term-list p))))
+  (put 'make 'dense
+       (lambda (terms) (tag terms)))
+  (put '=zero? '(dense)
+       (lambda (terms) (all-zero? terms)))
+  (put 'add '(dense dense)
+       (lambda (terms1 terms2) (tag (add-terms terms1 terms2))))
+  (put 'mul '(dense dense)
+       (lambda (terms1 terms2) (tag (mul-terms terms1 terms2))))
+  'done)
+(install-polynomial-dense-package)
+(define (make-dense-terms terms)
+  ((get 'make 'dense) terms))
+(define dense-terms (make-dense-terms '(1 1 1)))
+dense-terms
+((get 'add '(dense dense)) '(3 0 2 1) '(3 0 2 1))
+(add dense-terms dense-terms)
+(mul dense-terms dense-terms)
+(negation dense-terms)
+(=zero? dense-terms)
+(=zero? (make-dense-terms '(0 0 0 0)))
+(define (create-n-zeroes n)
+      (if (> n 0)
+          (cons 0 (create-n-zeroes (- n 1)))
+          '()))
+(append (create-n-zeroes 1) (list 1 2))
+
+
+
+(define pol1 (make-polynomial 'x (make-sparse-terms '((2 1) (1 1) (0 1)))))
+(define pol2 (make-polynomial 'x (make-sparse-terms '((2 1) (1 1) (0 1)))))
+
+(negation pol2)
+(add pol1 pol2)
+(add pol1 (negation pol2))
+(sub pol1 pol2)
+(mul pol1 pol2)
+
+(=zero? 0)
+
+(make-number 1)
+
+
+;; Ex. 2.91
+
+;; в последнем пакете для install-polynomial-sparse-package
+
+;; Иерархия типов в символической алгебре
+
+;; для полиномов от нескольких переменных, мы не можем привести их к башне, как это было с числами, потому что полином от x, может иметь коэффициенты которые являются полиномом от y. Также возможно иметь полином от y чьи коэффициенты полиномы от х. Ни один из этих типов не будет "выше" другого. Но также необходимо уметь складывать полиному из разных типов (c разными переменными).
+
+;; одно из возможных решений привести полином к другому типу, что бы оба полинома были одного типа (по одной переменной). То есть мы создаем искусственную башню и приводим полиному к канонической форме. Эта стратегия работает хорошо, за исключением того что мы может зря расширить полином, делая его трудочитаемым.
+
+;; Не должно удивлять что приведение типов серьёзная проблема в дизайне больших приложений.
+
+;; Ex 2.92
+
+
+(define (install-polynomial-package)
+  ;; internal procedures
+  ;; representation of poly
+  (define (make-poly variable term-list)
+    (cons variable term-list))
+  (define (variable p) (car p))
+  (define (term-list p) (cdr p))
+  ;; <procedures same-variable? and variable? from section 2.3.2>
+  (define (variable? x) (symbol? x))
+  (define (same-variable? v1 v2)
+    (and (variable? v1) (variable? v2) (eq? v1 v2)))
+  ;; representation of terms and term lists
+  ;; ((100 1) (2 2) (0 1)) = x^100 + 2x^2 + 1
+
+  ;; procedurs on poly
+  (define (add-poly p1 p2)
+    (if (same-variable? (variable p1) (variable p2))
+        (make-poly (variable p1)
+                   (add (term-list p1)
+                        (term-list p2)))
+        (error "Polys not in same var -- ADD-POLY"
+               (list p1 p2))))
+  (define (mul-poly p1 p2)
+    (if (same-variable? (variable p1) (variable p2))
+        (make-poly (variable p1)
+                   (mul (term-list p1)
+                        (term-list p2)))
+        (error "Polys not in same var -- MUL-POLY"
+               (list p1 p2))))
+
+  ;; interface to rest of the system
+  (define (tag p) (attach-tag 'polynomial p))
+  (put 'add '(polynomial polynomial)
+       (lambda (p1 p2) (tag (add-poly p1 p2))))
+  (put 'sub '(polynomial polynomial)
+       (lambda (p1 p2) (tag (add-poly p1 (contents (negation (tag p2)))))))
+  (put 'mul '(polynomial polynomial)
+       (lambda (p1 p2) (tag (mul-poly p1 p2))))
+  (put 'make 'polynomial
+       (lambda (var terms) (tag (make-poly var terms))))
+  (put '=zero? '(polynomial)
+       (lambda (x) (=zero? (term-list x))))
+  (put 'negation '(polynomial)
+       (lambda (p) (tag (make-poly (variable p) (negation (term-list p))))))
+  'done)
+
+(install-polynomial-package)
+
+
+
+;; надо уметь приводить к полиному по x
+
+
+
+(define (install-coercion-polynomial-package)
+  (define (tag p) (attach-tag 'polynomial p))
+  (define (term-list pol)
+    (cdr (cdr (cdr pol)))
+    )
+  (define (order term) (car term))
+  (define (coeff term) (cadr term))
+
+  (define (switch-variable pol)
+    (define (switch-single-term single)
+      ;; term here y and polinom x
+      (
+       make-polynomial
+       'x
+       (make-sparse-terms
+        (map (lambda (term)
+               (list
+                (order term)
+                (make-polynomial
+                 'y
+                 (make-sparse-terms (list (list (car single) (coeff term))))
+                 )))
+             (cadr single)))))
+
+    (define (sum-list l)
+      (if (= (length l) 2)
+          (add (car l) (cadr l))
+          (add (car l) (sum-list (cdr l)))))
+
+    ;; пусть пока везде полиномы, в общем виде надо добавить условие
+    (let ((mapterms (map (lambda (term) (cons (car term) (list (term-list (cadr term))))) (term-list pol))))
+      (sum-list (map (lambda (item) (switch-single-term item)) mapterms))
+      )
+    )
+  ;; interface
+  (put 'raise '(polynomial)
+       (lambda (pol) (switch-variable (tag pol))))
+  'done)
+(install-coercion-polynomial-package)
+
+(define pol2variable (make-polynomial
+                      'y
+                      (make-sparse-terms (list (list 2 (make-polynomial 'x (make-sparse-terms '((2 1) (0 1)))))
+                                               (list 1 (make-polynomial 'x (make-sparse-terms '((3 1) (2 2) (0 3)))))
+                                               (list 0 (make-polynomial 'x (make-sparse-terms '((0 5)))))))))
+
+pol2variable
+(raise pol2variable)
+
+(define pol1 (
+              make-polynomial
+              'x
+              (make-sparse-terms (list (list 2 (make-polynomial 'y (make-sparse-terms '((2 1) (0 1)))))
+                                       (list 1 (make-polynomial 'y (make-sparse-terms '((0 1)))))
+                                       (list 0 (make-polynomial 'y (make-sparse-terms '((0 1)))))))))
+pol1
+(add pol1 (raise pol2variable))
+
+
+;; Дополнительные упражнения, рациональные функции.
+
+;; уберем из пакета рациональных, gcd в make-rat
+;; и сделаем что бы операции были общими.
+
+;; Ex. 2.93
+
+(define (install-rational-polynomial-package)
+  ;; internal procedures
+  (define (numer x) (car x))
+  (define (denom x) (cdr x))
+  (define (make-rat n d)
+    (let ((red (reduce n d)))
+      (cons (car red) (cadr red))))
+
+  (define (add-rat x y)
+    (make-rat (add (mul (numer x) (denom y))
+                 (mul (numer y) (denom x)))
+              (mul (denom x) (denom y))))
+  (define (sub-rat x y)
+    (make-rat (sub (mul (numer x) (denom y))
+                 (mul (numer y) (denom x)))
+              (mul (denom x) (denom y))))
+  (define (mul-rat x y)
+    (make-rat (mul (numer x) (numer y))
+              (mul (denom x) (denom y))))
+  (define (div-rat x y)
+    (make-rat (mul (numer x) (denom y))
+              (mul (denom x) (numer y))))
+  ;; interface to rest of the system
+  (define (tag x) (attach-tag 'rational x))
+  (define (real-tag x) (attach-tag 'scheme-real x))
+
+
+  (put 'add '(rational rational)
+       (lambda (x y) (tag (add-rat x y))))
+  (put 'sub '(rational rational)
+       (lambda (x y) (tag (sub-rat x y))))
+  (put 'mul '(rational rational)
+       (lambda (x y) (tag (mul-rat x y))))
+  (put 'div '(rational rational)
+       (lambda (x y) (tag (div-rat x y))))
+
+  (put 'make 'rational
+       (lambda (n d) (tag (make-rat n d))))
+  ;; (put 'equ? '(rational rational)
+  ;;      (lambda (x y) (or
+  ;;                (and (= (numer x) (numer y)) (= (denom x) (denom y)))
+  ;;                (and (= (numer x) (numer y)) (= (numer x) 0)))))
+  (put '=zero? '(rational)
+       (lambda (x) (=zero? (numer x))))
+  'done)
+(install-rational-polynomial-package)
+
+(define rf1 (make-rational p1 p2))
+
+(define (make-rational n d)
+  ((get 'make 'rational) n d))
+
+
+(define p1 (make-polynomial 'x (make-sparse-terms '((2 1)(0 1)))))
+(define p2 (make-polynomial 'x (make-sparse-terms '((3 1)(0 1)))))
+(define rf (make-rational p2 p1))
+
+rf
+(add rf rf)
+
+
+(define (install-polynomial-sparse-package)
+  (define (tag x) (attach-tag 'sparse x))
+  (define (the-empty-termlist) '())
+  (define (first-term term-list) (car term-list))
+  (define (rest-terms term-list) (cdr term-list))
+  (define (empty-termlist? term-list) (null? term-list))
+  (define (make-term order coeff) (list order coeff))
+  (define (order term) (car term))
+  (define (coeff term) (cadr term))
+  (define (negation-term-list L1)
+    (if (empty-termlist? L1)
+        L1
+        (cons (make-term (order (first-term L1)) (negation (coeff (first-term L1)))) (negation-term-list (rest-terms L1)))))
+
+  (define (adjoin-term term term-list)
+    (if (=zero? (coeff term))
+        term-list
+        (cons term term-list)))
+  (define (add-terms L1 L2)
+    (cond ((empty-termlist? L1) L2)
+          ((empty-termlist? L2) L1)
+          (else
+           (let ((t1 (first-term L1)) (t2 (first-term L2)))
+             (cond ((> (order t1) (order t2))
+                    (adjoin-term
+                     t1 (add-terms (rest-terms L1) L2)))
+                   ((< (order t1) (order t2))
+                    (adjoin-term
+                     t2 (add-terms L1 (rest-terms L2))))
+                   (else
+                    (adjoin-term
+                     (make-term (order t1)
+                                (add (coeff t1) (coeff t2)))
+                     (add-terms (rest-terms L1)
+                                (rest-terms L2)))))))))
+
+  (define (sub-terms L1 L2)
+    (add-terms L1 (negation-term-list L2)))
+
+  (define (mul-terms L1 L2)
+    (if (empty-termlist? L1)
+        (the-empty-termlist)
+        (add-terms (mul-term-by-all-terms (first-term L1) L2)
+                   (mul-terms (rest-terms L1) L2))))
+  (define (mul-term-by-all-terms t1 L)
+    (if (empty-termlist? L)
+        (the-empty-termlist)
+        (let ((t2 (first-term L)))
+          (adjoin-term
+           (make-term (+ (order t1) (order t2))
+                      (mul (coeff t1) (coeff t2)))
+           (mul-term-by-all-terms t1 (rest-terms L))))))
+
+
+  (define (div-terms L1 L2)
+    (if (empty-termlist? L1)
+        (list (the-empty-termlist) (the-empty-termlist))
+        (let ((t1 (first-term L1))
+              (t2 (first-term L2)))
+          (if (> (order t2) (order t1))
+              (list (the-empty-termlist) L1)
+              (let ((new-c (div (coeff t1) (coeff t2)))
+                    (new-o (- (order t1) (order t2))))
+                (let ((rest-of-result
+                       (sub-terms L1 (mul-terms (list (make-term new-o new-c)) L2))))
+
+                  (let ((result (div-terms rest-of-result L2)))
+                    (list (adjoin-term (make-term new-o new-c) (car result)) (cadr result)))))))))
+
+  (define (all-zero? L1)
+    (cond ((empty-termlist? L1) true)
+          ((and (=zero? (coeff (first-term L1))) (all-zero? (rest-terms L1))) true)
+          (else false)))
+
+
+  (define (multiple-coeffs q integer-factor)
+    (map (lambda (x) (list (order x) (* (coeff x) integer-factor))) q))
+
+  (define (integerizing-factor p q)
+    (let ((c (coeff (first-term q)))
+          (o1 (order (first-term p)))
+          (o2 (order (first-term q))))
+      (expt c (+ 1 o1 (- o2)))))
+
+  (define (remainder-terms a b)
+    (cadr (div-terms a b)))
+
+  (define (pseudoremainder-terms a b)
+    (let ((ma (multiple-coeffs a (integerizing-factor a b))))
+      (display (cadr (div-terms ma b)))
+      (newline)
+      (newline)
+      (cadr (div-terms ma b))))
+
+  (define (reduce-gcd-terms-coeff terms)
+
+    (define (gcd-integer-list l)
+      (if (< (length l) 2)
+          (car l)
+          (gcd-integer-list (cons (gcd (car l) (cadr l)) (cddr l)))))
+
+    (let ((l (map (lambda (x) (coeff x)) terms)))
+      (multiple-coeffs terms (/ 1 (gcd-integer-list l))))
+    )
+
+  (define (reduce-terms a b)
+    (let ((gcd-ab (gcd-terms a b)))
+      (list (tag (car (div-terms a gcd-ab))) (tag (car (div-terms b gcd-ab))))))
+
+
+  (define (gcd-terms a b)
+    (if (empty-termlist? b)
+        (reduce-gcd-terms-coeff a)
+        (gcd-terms b (pseudoremainder-terms a b))))
+
+  ;; interface
+  (put 'negation '(sparse)
+       (lambda (p) (tag (negation-term-list p))))
+  (put 'make 'sparse
+       (lambda (terms) (tag terms)))
+  (put '=zero? '(sparse)
+       (lambda (terms) (all-zero? terms)))
+  (put 'add '(sparse sparse)
+       (lambda (terms1 terms2) (tag (add-terms terms1 terms2))))
+  (put 'sub '(sparse sparse)
+       (lambda (terms1 terms2) (tag (sub-terms terms1 terms2))))
+  (put 'mul '(sparse sparse)
+       (lambda (terms1 terms2) (tag (mul-terms terms1 terms2))))
+  (put 'div '(sparse sparse)
+       (lambda (terms1 terms2) (tag (div-terms terms1 terms2))))
+  (put 'greatest-common-divisor '(sparse sparse)
+       (lambda (terms1 terms2) (tag (gcd-terms terms1 terms2))))
+  (put 'reduce '(sparse sparse)
+       (lambda (terms1 terms2) (reduce-terms terms1 terms2)))
+  'done)
+
+(install-polynomial-sparse-package)
+(greatest-common-divisor q1 q2)
+
+(define (reduce term1 term2)
+  (apply-generic 'reduce term1 term2))
+;; (define (gcd-terms term1 term2)
+;;   (apply-generic 'gcd-terms term1 term2))
+
+;; (define p1 (make-polynomial 'x (make-sparse-terms '((2 1)(0 1)))))
+;; (define p2 (make-polynomial 'x (make-sparse-terms '((3 1)(0 1)))))
+
+(gcd-terms (make-sparse-terms '((4 1) (3 -1) (2 -2) (1 2)))
+           (make-sparse-terms '((3 1) (1 -1)))
+           )
+
+
+(define (install-polynomial-package)
+  ;; internal procedures
+  ;; representation of poly
+  (define (tag p) (attach-tag 'polynomial p))
+  (define (make-poly variable term-list)
+    (cons variable term-list))
+  (define (variable p) (car p))
+  (define (term-list p) (cdr p))
+  ;; <procedures same-variable? and variable? from section 2.3.2>
+  (define (variable? x) (symbol? x))
+  (define (same-variable? v1 v2)
+    (and (variable? v1) (variable? v2) (eq? v1 v2)))
+  ;; representation of terms and term lists
+  ;; ((100 1) (2 2) (0 1)) = x^100 + 2x^2 + 1
+
+  ;; procedurs on poly
+  (define (add-poly p1 p2)
+    (if (same-variable? (variable p1) (variable p2))
+        (make-poly (variable p1)
+                   (add (term-list p1)
+                        (term-list p2)))
+        (error "Polys not in same var -- ADD-POLY"
+               (list p1 p2))))
+  (define (mul-poly p1 p2)
+    (if (same-variable? (variable p1) (variable p2))
+        (make-poly (variable p1)
+                   (mul (term-list p1)
+                        (term-list p2)))
+        (error "Polys not in same var -- MUL-POLY"
+               (list p1 p2))))
+
+  (define (gcd-poly p1 p2)
+    (if (same-variable? (variable p1) (variable p2))
+        (make-poly (variable p1)
+                   (greatest-common-divisor (term-list p1)
+                                            (term-list p2)))
+        (error "Polys not in same var -- GCD-POLY"
+               (list p1 p2))))
+
+  (define (reduce-poly p1 p2)
+    (if (same-variable? (variable p1) (variable p2))
+        (map (lambda (terms) (tag (make-poly (variable p1) terms)))
+             (reduce (term-list p1)
+                     (term-list p2)))
+        (error "Polys not in same var -- REDUCE-POLY"
+               (list p1 p2))))
+
+  ;; interface to rest of the system
+  (put 'add '(polynomial polynomial)
+       (lambda (p1 p2) (tag (add-poly p1 p2))))
+  (put 'sub '(polynomial polynomial)
+       (lambda (p1 p2) (tag (add-poly p1 (contents (negation (tag p2)))))))
+  (put 'mul '(polynomial polynomial)
+       (lambda (p1 p2) (tag (mul-poly p1 p2))))
+  (put 'make 'polynomial
+       (lambda (var terms) (tag (make-poly var terms))))
+  (put '=zero? '(polynomial)
+       (lambda (x) (=zero? (term-list x))))
+  (put 'negation '(polynomial)
+       (lambda (p) (tag (make-poly (variable p) (negation (term-list p))))))
+  (put 'greatest-common-divisor '(polynomial polynomial)
+       (lambda (p1 p2) (tag (gcd-poly p1 p2))))
+  (put 'reduce '(polynomial polynomial)
+       (lambda (p1 p2) (reduce-poly p1 p2)))
+  'done)
+
+(install-polynomial-package)
+
+(define (greatest-common-divisor p1 p2)
+  (apply-generic 'greatest-common-divisor p1 p2))
+
+
+(define terms1 (make-sparse-terms '((4 1) (3 -1) (2 -2) (1 2))))
+(define terms2 (make-sparse-terms '((3 1) (1 -1))))
+
+(define p1 (make-polynomial 'x terms1))
+(define p2 (make-polynomial 'x terms2))
+(greatest-common-divisor p1 p2)
+
+
+;; Ex. 2.95
+
+(define terms1 (make-sparse-terms '((2 1) (1 -2) (0 1))))
+(define p1 (make-polynomial 'x terms1))
+(define terms2 (make-sparse-terms '((2 11) (0 7))))
+(define p2 (make-polynomial 'x terms2))
+(define terms3 (make-sparse-terms '((1 13) (0 5))))
+(define p3 (make-polynomial 'x terms3))
+(define q1 (mul p1 p2))
+(define q2 (mul p1 p3))
+q1
+q2
+
+(greatest-common-divisor q1 q2)
+
+;; видим что появляются дроби при нахождении НОД, для полиномов от одной переменной, можно ввести понятие псевдоделения, умножая делитель на константу  с^(1+O_1-O_2), где O_1 порядок p, O_2 порядок  
+
+
+
+(define p1 (make-polynomial 'x (make-sparse-terms '((1 1)(0 1)))))
+(define p2 (make-polynomial 'x (make-sparse-terms '((3 1)(0 -1)))))
+(define p3 (make-polynomial 'x (make-sparse-terms '((1 1)))))
+(define p4 (make-polynomial 'x (make-sparse-terms '((2 1)(0 -1)))))
+p1
+p2
+(define rf1 (make-rational p1 p2))
+(define rf2 (make-rational p3 p4))
+rf2
+
+rf1
+
+(add rf1 rf2)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; 3.1  Назначение и локальное состояние.
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define balance 100)
+
+(define (withdraw amount)
+  (if (>= balance amount)
+      (begin (set! balance (- balance amount))
+             balance)
+      "Insufficient funds"))
+(withdraw 75)
+(withdraw 50)
+
+(define new-withdraw
+  (let ((balance 100))
+    (lambda (amount)
+      (if (>= balance amount)
+          (begin (set! balance (- balance amount))
+                 balance)
+          "Insufficient funds"))))
+(new-withdraw 75)
+
+
+(define (make-withdraw balance)
+  (lambda (amount)
+    (if (>= balance amount)
+        (begin (set! balance (- balance amount))
+               balance)
+        "Insufficient funds")))
+
+(define W1 (make-withdraw 100))
+(W1 10)
+
+(define (make-account balance)
+  (define (withdraw amount)
+    (if (>= balance amount)
+        (begin (set! balance (- balance amount))
+               balance)
+        "Insufficient funds"))
+  (define (deposit amount)
+    (set! balance (+ balance amount))
+    balance)
+  (define (dispatch m)
+    (cond ((eq? m 'withdraw) withdraw)
+          ((eq? m 'deposit) deposit)
+          (else (error "Unknown request -- MAKE-ACCOUNT"
+                       m))))
+  dispatch)
+
+(define acc (make-account 100))
+((acc 'withdraw) 50)
+((acc 'deposit) 50)
+
+
+(define (make-accumulator sum)
+  (lambda (x) (begin
+           (set! sum (+ sum x))
+           sum
+           )))
+
+
+(define A (make-accumulator 5))
+(A 10)
+15
+(A 10)
+25
+
+
+;; Ex. 3.2
+
+(define (make-monitor f)
+  (define how-many-call? 0)
+  (define (incretement)
+    (begin
+      (set! how-many-call? (+ how-many-call? 1))
+      f))
+  (define (dispatch m)
+    (cond ((eq? m 'how-many-call?) how-many-call?)
+          (else ((incretement) m))))
+  dispatch)
+
+(define s (make-monitor sqrt))
+(s 100)
+(s 'how-many-call?)
+
+
+;; Ex 3.3, 3.4
+
+(define (make-account balance password)
+  (define (withdraw amount)
+    (if (>= balance amount)
+        (begin (set! balance (- balance amount))
+               balance)
+        "Insufficient funds"))
+  (define (deposit amount)
+    (set! balance (+ balance amount))
+    balance)
+
+  (define (permission-denied . m)
+    (display "Incorrect password"))
+
+
+  (define monitor-error-password (make-monitor permission-denied))
+  (define (call-limit?)
+    (when (= (monitor-error-password 'how-many-call?) 2)
+        (display "Viu viu viu viu..")))
+
+  (define (dispatch pass func)
+    (cond ((not (eq? pass password)) (begin
+                                       (call-limit?)
+                                       monitor-error-password))
+          ((eq? func 'withdraw) withdraw)
+          ((eq? func 'deposit) deposit)
+          (else (error "Unknown request -- MAKE-ACCOUNT"
+                       func))))
+  dispatch)
+
+(define acc (make-account 100 'secret-password))
+acc
+((acc 'secret-password 'withdraw) 40)
+((acc 'some-other-password 'deposit) 50)
+
+
+(define rand
+  (let ((x random-init))
+    (lambda ()
+      (set! x (rand-update x))
+      x)))
+
+
+(define (estimate-pi trials)
+  (sqrt (/ 6 (monte-carlo trials cesaro-test))))
+(define (cesaro-test)
+   (= (gcd (rand) (rand)) 1))
+(define (monte-carlo trials experiment)
+  (define (iter trials-remaining trials-passed)
+    (cond ((= trials-remaining 0)
+           (/ trials-passed trials))
+          ((experiment)
+           (iter (- trials-remaining 1) (+ trials-passed 1)))
+          (else
+           (iter (- trials-remaining 1) trials-passed))))
+  (iter trials 0))
+
+
+
+
+;; Ex 3.5
+
+;; окружность
+(define (predicate x y)
+  (<= (+ (square (- x 25)) (square (- y 25))) (square 25)))
+
+;; x от 2 до 8
+;; y от 4 до 10
+(define (random-in-range low high)
+  (let ((range (- high low)))
+    (+ low (random range))))
+
+(define (estimateintegral P min-x max-x min-y max-y trials)
+  (define (test)
+    (P
+     (random-in-range min-x max-x)
+     (random-in-range min-y max-y)))
+
+  (* (monte-carlo trials test) (* (- max-x min-x) (- max-y min-y))))
+
+(estimateintegral predicate 0 50 0 50 100000)
+                                        ;Value: 16866/625 26.46
+
+;; приближенное значение pi равно результат поделить на квадрат 3.
+
+
+;; Ex. 3.6.
+
+(define (rand m)
+  (define init-value 2)
+
+  (define (rand-update)
+    (cond ((= init-value 0) 7)
+          ((= init-value 2) 5)
+          ((= init-value 5) 8)
+          ((= init-value 8) 3)
+          ((= init-value 3) 9)
+          ((= init-value 9) 1)
+          ((= init-value 1) 4)
+          ((= init-value 4) 4)))
+
+  (define (generate)
+    (set! init-value (rand-update))
+    init-value)
+
+  (lambda (m) (cond ((eq? m 'reset) (lambda (x) (reset x)))
+               ((eq? m 'generate) (generate))))
+  
+  )
+
+(define rand
+  (let ((x random-init))
+    (lambda ()
+      (set! x (rand-update x))
+      x)))
+
+
+
+(define rand
+  (let ((random-init 2))
+    (define (rand-update)
+      (cond ((= random-init 0) 7)
+            ((= random-init 2) 5)
+            ((= random-init 5) 8)
+            ((= random-init 8) 3)
+            ((= random-init 3) 9)
+            ((= random-init 9) 1)
+            ((= random-init 1) 4)
+            ((= random-init 4) 6)
+            ((= random-init 6) 0)
+            ((= random-init 7) 2)
+            ))
+
+    (define (generate)
+      (set! random-init (rand-update))
+      random-init)
+
+    (lambda (m)
+      (cond ((eq? m 'reset) (lambda (x)
+                              (begin (set! random-init x)
+                                     x)))
+            ((eq? m 'generate) (generate))))
+    ))
+
+((rand 'reset) 8)
+(rand 'generate)
+
+
+;; Цена добавления присваиваивания
+
+;; императивное программирование
+
+;; Упрражнение 3.7
+
+(define (make-monitor f)
+    (define how-many-call? 0)
+    (define (incretement)
+      (begin
+        (set! how-many-call? (+ how-many-call? 1))
+        f))
+    (define (dispatch m)
+      (cond ((eq? m 'how-many-call?) how-many-call?)
+            (else ((incretement) m))))
+    dispatch)
+
+(define (make-account balance password)
+ 
+  (define (withdraw amount)
+    (if (>= balance amount)
+        (begin (set! balance (- balance amount))
+               balance)
+        "Insufficient funds"))
+  (define (deposit amount)
+    (set! balance (+ balance amount))
+    balance)
+
+  (define (permission-denied . m)
+    "Incorrect password")
+
+
+  (define monitor-error-password (make-monitor permission-denied))
+  (define (call-limit?)
+    (when (= (monitor-error-password 'how-many-call?) 7)
+        (display "Viu viu viu viu..")))
+
+  (define (dispatch pass func)
+    (cond ((not (eq? pass password)) (begin
+                                       (call-limit?)
+                                       monitor-error-password))
+          ((eq? func 'withdraw) withdraw)
+          ((eq? func 'deposit) deposit)
+          (else (error "Unknown request -- MAKE-ACCOUNT"
+                       func))))
+  dispatch)
+
+(define peter-acc (make-account 100 'secret))
+peter-acc
+((peter-acc 'secret 'withdraw) 10)
+((peter-acc 'some-other-password 'deposit) 50)
+((peter-acc 'secret 'deposit) 50)
+
+
+(define (make-joint account acc-pass new-pass)
+  (display ((account acc-pass 'withdraw) 0))
+  (when (equal? ((account acc-pass 'withdraw) 0) "Incorrect password")
+    (error "Incorrect password"))
+
+  (define (permission-denied . m)
+    "Incorrect password")
+  (define monitor-error-password (make-monitor permission-denied))
+  (define (call-limit?)
+    (when (= (monitor-error-password 'how-many-call?) 7)
+        (display "Viu viu viu viu..")))
+
+  (define (withdraw amount)
+    ((account acc-pass 'withdraw) amount))
+
+  (define (deposit amount)
+    ((account acc-pass 'deposit) amount))
+
+  (define (dispatch pass func)
+    (cond ((not (eq? pass new-pass)) (begin
+                                       (call-limit?)
+                                       monitor-error-password))
+          ((eq? func 'withdraw) withdraw)
+          ((eq? func 'deposit) deposit)
+          (else (error "Unknown request -- MAKE-ACCOUNT"
+                       func))))
+  dispatch
+  )
+
+
+(define paul-acc
+  (make-joint peter-acc 'secret 'open-sesam))
+((paul-acc 'open-sesam 'withdraw) 10)
+
+
+
+;; Ex. 3.8
+
+(define f (let ((y 0))
+            (lambda (x) (if (= x 0)
+                       (begin (set! y 1) x)
+                       (- x y)))))
+
+;; слева направо, сумма 0
+(f 0) ;; 0
+(f 1) ;; 0
+
+;; справа налево 1
+(f 1) ;; 1
+(f 0) ;; 0
+
+
+(+ (f 0) (f 1))
+
+
+
+(define (make-withdraw initial-amount)
+  (let ((balance initial-amount))
+    (lambda (amount)
+      (if (>= balance amount)
+          (begin (set! balance (- balance amount))
+                 (display initial-amount)
+                 balance)
+          "Insufficient funds"))))
+
+(define W1 (make-withdraw 100))
+
+(W1 50)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; 3.2 Моделирование изменяемых данных
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define a (list (list 1 2) 2 3))
+a
+(define b (list 5 6))
+(set-car! a b)
+
+
+;; 3.12
+(define (append x y)
+  (if (null? x)
+      y
+      (cons (car x) (append (cdr x) y))))
+
+(define (append! x y)
+  (set-cdr! (last-pair x) y)
+  x)
+(define (last-pair x)
+  (if (null? (cdr x))
+      x
+      (last-pair (cdr x))))
+(define x (list 'a 'b))
+(define y (list 'c 'd))
+(define z (append x y))
+z
+x
+y
+(set-car! x 'y)
+y
+z
+(cdr x)
+(define w (append! x y))
+w
+(cdr x)
+y
+;; 3.13
+(define (make-cycle x)
+  (set-cdr! (last-pair x) x)
+  x)
+
+(define z (make-cycle (list 'a 'b 'c)))
+z
+(last-pair z)
+
+;; 3.14
+(define v (list 'a 'b 'c 'd))
+
+(define (mystery x)
+  (define (loop x y)
+    (if (null? x)
+        y
+        (let ((temp (cdr x)))
+          (set-cdr! x y)
+          (loop temp x))))
+  (loop x '()))
+(define w (mystery v))
+w
+v
+(set-car! v 'c)
+v
+w
+;; (loop v '())
+;; temp (list b c d)
+;; v (a)
+;; loop (list b c d) (a)
+;; temp (list c d)
+;; (b a) <- x
+;; loop (list c d) (list b a))
+
+;; 3.15
+
+(define x (list 'a 'b))
+(define z1 (cons x x))
+
+(define z2 (cons (list 'a 'b) (list 'a 'b)))
+
+(define (set-to-wow! x)
+  (set-car! (car x) 'wow)
+  x)
+
+z1
+z2
+
+(set-to-wow! z1)
+
+(set-to-wow! z2)
+
+(define (count-pairs x)
+  (if (not (pair? x))
+      0
+      (+ (count-pairs (car x))
+         (count-pairs (cdr x))
+         1)))
+
+
+(define x (cons 1 '()))
+(define y (cons 2 x))
+(define z (cons 3 y))
+(count-pairs z)
+
+
+(define x (cons 1 '()))
+(define y (cons x x))
+(define z (cons y 99999))
+(count-pairs z)
+
+
+(define x (cons 1 '()))
+(define y (cons x x))
+(define z (cons y y))
+(count-pairs z)
+
+
+(define x (cons 1 '()))
+(define y (cons 2 x))
+(define z (cons 3 y))
+(set-cdr! x z)
+(count-pairs z)
+
+
+;; Ex 3.17
+(define l '())
+(append 1 l)
+l
+(append  (list (cons 1 2)) '())
+(append (list (cons 1 2)) (append  (list (cons 1 2)) '()))
+
+(define (include? item positions)
+  (if (null? positions)
+      false
+      (or (equal? item (car positions)) (include? item (cdr positions)))))
+
+(define (count-uniq-pairs x checked)
+  (if (or (not (pair? x)) (include? x checked))
+      0
+      (let ((checked (cons x checked)))
+        (if (equal? (car x) (cdr x))
+            (+ (count-uniq-pairs (car x) checked) 1)
+            (+ (count-uniq-pairs (car x) checked)
+               (count-uniq-pairs (cdr x) checked)
+               1)))))
+
+
+(define x (cons 1 '()))
+(define y (cons 2 x))
+(define z (cons 3 y))
+(count-uniq-pairs z '())
+
+
+(define x (cons 1 '()))
+(define y (cons x x))
+(define z (cons y 99999))
+(count-uniq-pairs z '())
+
+
+(define x (cons 1 '()))
+(define y (cons x x))
+(define z (cons y y))
+(count-uniq-pairs z '())
+
+
+(define x (cons 1 '()))
+(define y (cons 2 x))
+(define z (cons 3 y))
+(set-cdr! x z)
+(count-uniq-pairs z '())
+
+;; 3.18
+
+(define (make-cycle x)
+  (set-cdr! (last-pair x) x)
+  x)
+
+(define z (make-cycle (list 'a 'b 'c)))
+z
+(define z1 (cons '999999 z))
+z1
+(cdr (cdr z1))
+
+(cdr z)
+(define temp (cdr z))
+(set-cdr! z 'wowow)
+z ;; (a)
+temp ;; (b c a)
+
+;; если все это проделать на списке без цикла
+
+(define y (list 'a 'b 'c))
+(define y1 (cons '999999 y))
+y1
+(define temp (cdr y))
+(set-cdr! y '())
+y ;; (a)
+temp ;; value (b c)
+
+
+(define z2 (make-cycle (list 'a 'b 'c))) ;; эквивалентен z только создается отдельно
+(define (break-cycle l)
+  (let ((temp (cdr l)))
+    (set-cdr! l '())
+    (cons l temp)))
+
+;; если при сверке два раза не повторится temp, то это точно не цикл.
+;; если он повторился, то возможно там все элементы с одинаковым значением.
+
+
+(define (make-cycle x)
+  (set-cdr! (last-pair x) x)
+  x)
+
+(define z (make-cycle (list 'a 'b 'c)))
+
+
+(same? (cdr z) (cdr (cdr z)))
+;; кролик бежит в два раза быстрее черепахи, находим точку когда их позиция повторится
+(define (repeat-point? tl hl)
+  (display (car tl))
+  (display (car hl))
+  (if (eq? (car tl) (car hl))
+      hl
+      (same-point? (cdr tl) (cdr (cdr hl)))))
+
+(define hl (repeat-point? (cdr z) (cdr (cdr z))))
+hl
+
+
+(define z '(a a b c a a b c a a b c a a b c a a b c a a a))
+(define z '(b c a b c a b c a b c a b c a b c a))
+
+(define (start-repeat? tl hl index)
+  (if (eq? (car tl) (car hl))
+      (cons tl index)
+      (start-repition?? (cdr tl) (cdr (hl) (+ index 1)))))
+(define res2 (start-repeat? z hl 0))
+(newline)
+(display (cdr res2))
+
+(define (period? tl hl period)
+  (if (eq? (car tl) (car hl))
+      period
+      (period? tl (cdr hl) (+ period 1))))
+
+(define period (period? (car res2) (cdr (car res2)) 1))
+period
+;; теперь они бегут с одинаковой скоростью, черепаха с начальной позиции
+;; а кролик продолжает
+
+;; # Find the position μ of first repetition.
+;;     mu = 0
+;;     tortoise = x0
+;;     while tortoise != hare:
+;;         tortoise = f(tortoise)
+;;         hare = f(hare)   # Hare and tortoise move at same speed
+;;         mu += 1
+
+(define (floyed l)
+  ;; кролик бежит в два раза быстрее черепахи
+  ;; если цикл есть то он обагнав его на круг встретятся в некоторой точке
+  ;; запоминаем позицию кролика
+  (define (same-point? tl hl)
+    (if (eq? (car tl) (car hl))
+        (begin
+          (display (car tl))
+          (display (car hl))
+          hl
+          )
+        (same-point? (cdr tl) (cdr (cdr hl)))))
+  ;; далее бегут с равной минимальной скоростью
+  ;; кролик начинает с позиции предведущей встречи, а черепаха сначала
+  ;; как только их позиции совпадут это будет означать что 
+  (define (start-repeat? tl hl index)
+    (if (eq? (car tl) (car hl))
+        (cons tl index)
+        (start-repeat? (cdr tl) (cdr hl) (+ index 1))))
+  ;; черепаха остается на месте а кролик бежит с минимальной скоростью
+  (define (period? tl hl period)
+    (if (eq? (car tl) (car hl))
+        period
+        (period? tl (cdr hl) (+ period 1))))
+
+  (define hl (same-point? (cdr l) (cdr (cdr l))))
+  ;; (display hl)
+  ;; (c b a b c a c b)
+  (define start-repeat (start-repeat? l hl 0))
+  (define tl (car start-repeat))
+  (define index (cdr start-repeat))
+
+  (define period (period? tl (cdr tl) 1))
+
+  (cons index period))
+
+(define (make-cycle2 x)
+  (set-cdr! (last-pair x) (cdr (cdr x)))
+  x)
+
+(define z (make-cycle (list 'a 'b 'c 'd 'e 'f 'g 'h)))
+z ;Value: (a b . #0=(c d e f . #0#))
+(floyed z)
+;; бегут с разными скоростями
+;; b c   b c
+;; c e   c e
+;; d c   d g
+;; e e   e c
+;;       f e
+;;       g g
+;; далее бегут с одной скоростью, как только они опять встрется эта точка будет означать начало цикла, потомучто
+
+до этого кролик промежал расстояние до цикла + цикл + от начала цикла до точки встречи
+а черепаха расстояние до цикла + от начала цикла до точки
+
+можно показать что дистанция v в точке встречи кратна длине цикла.
+
+
+так как они теперь идут с равными скоростями
+то пока черепаха дойдет до начала цикла, кролик будут должен завершить еще один круг и тоже окажется в начале цикла
+
+
+;; Ex 3.20
+
+(define (cons x y)
+  (define (dispatch m)
+    (cond ((eq? m 'car) x)
+          ((eq? m 'cdr) y)
+          (else (error "Неопределенная операция -- CONS" m))))
+  dispatch)
+(define (car z) (z 'car))
+(define (cdr z) (z 'cdr))
+
+(define (cons x y)
+  (define (set-x! v) (set! x v))
+  (define (set-y! v) (set! y v))
+  (define (dispatch m)
+    (cond ((eq? m 'car) x)
+          ((eq? m 'cdr) y)
+          ((eq? m 'set-car!) set-x!)
+          ((eq? m 'set-cdr!) set-y!)
+          (else (error "Неопределенная операция -- CONS" m))))
+  dispatch)
+
+(define (car z) (z 'car))
+(define (cdr z) (z 'cdr))
+(define (set-car! z new-value)
+  ((z 'set-car!) new-value)
+  z)
+(define (set-cdr! z new-value)
+  ((z 'set-cdr!) new-value)
+  z)
+
+(define x (cons 1 2))
+(car x)
+(cdr x)
+(define z (cons x x))
+(car (car z))
+(set-car! (cdr z) 17)
+(car x) ;; 17
+
+
+;; Queue FIFO
+
+(define q (make-queue))
+(insert-queue! q 'a) 	a
+(insert-queue! q 'b) 	a b
+(delete-queue! q) 	b
+(insert-queue! q 'c) 	b c
+(insert-queue! q 'd) 	b c d
+(delete-queue! q) 	c d
+
+(define (front-ptr queue) (car queue))
+(define (rear-ptr queue) (cdr queue))
+(define (set-front-ptr! queue item) (set-car! queue item))
+(define (set-rear-ptr! queue item) (set-cdr! queue item))
+
+(define (empty-queue? queue) (null? (front-ptr queue)))
+
+(define (make-queue) (cons '() '()))
+
+(define (front-queue queue)
+  (if (empty-queue? queue)
+      (error "FRONT called with an empty queue" queue)
+      (car (front-ptr queue))))
+
+(define (insert-queue! queue item)
+  (let ((new-pair (cons item '())))
+    (cond ((empty-queue? queue)
+           (set-front-ptr! queue new-pair)
+           (set-rear-ptr! queue new-pair)
+           queue)
+          (else
+           (set-cdr! (rear-ptr queue) new-pair)
+           (set-rear-ptr! queue new-pair)
+           queue))))
+
+(define (delete-queue! queue)
+  (cond ((empty-queue? queue)
+         (error "DELETE! called with an empty queue" queue))
+        (else
+         (set-front-ptr! queue (cdr (front-ptr queue)))
+         queue)))
+
+
+;; Ex. 3.21.
+
+(define q1 (make-queue))
+q1
+(insert-queue! q1 'a)
+((a) a)
+(insert-queue! q1 'b)
+((a b) b)
+(delete-queue! q1)
+((b) b)
+(delete-queue! q1)
+(() b)
+
+(insert-queue! q1 'c)
+(define (print-queue queue)
+  (car queue))
+(print-queue q1)
+(delete-queue! q1)
+
+(define a '(a))
+(define l '(a b c))
+
+
+(define c (append l a))
+c
+(set-cdr! a '(b))
+a
+c
+
+;; Ex. 3.22
+
+(define a '())
+(define b '())
+
+;; 
+(define (front-ptr queue) (car queue))
+(define (rear-ptr queue) (cdr queue))
+(define (set-front-ptr! queue item) (set-car! queue item))
+(define (set-rear-ptr! queue item) (set-cdr! queue item))
+;; вот это мы заменили на локальные переменные
+
+(define (empty-queue? queue) (null? (front-ptr queue)))
+
+
+(define (make-queue)
+  (let ((front-ptr '())
+        (rear-ptr '()))
+
+    (define (empty-queue?) (null? front-ptr))
+    (define (front-queue)
+      (if (empty-queue?)
+          (error "FRONT вызвана с пустой очередью")
+          (car front-ptr)))
+
+    (define (insert item)
+      (let ((new-pair (cons item '())))
+        (cond ((empty-queue?)
+               (set! front-ptr new-pair)
+               (set! rear-ptr new-pair)
+               front-ptr)
+              (else
+               (set-cdr! rear-ptr new-pair)
+               (set! rear-ptr new-pair)
+               front-ptr))))
+
+    (define (delete)
+      (cond ((empty-queue?)
+             (error "DELETE! вызвана с пустой очередью"))
+            (else
+             (set! front-ptr (cdr front-ptr))
+             front-ptr)))
+
+    (define (dispatch m)
+      (cond ((eq? m 'delete) delete)
+            ((eq? m 'insert) insert)))
+    dispatch))
+
+(define q (make-queue))
+((q 'insert) 'a)
+((q 'insert) 'b)
+((q 'insert) 'c)
+((q 'delete))
+q
+q
+
+(insert-queue! q 'a) 	a
+(insert-queue! q 'b) 	a b
+(delete-queue! q) 	b
+
+
+;; Ex. 3.23
+
+(define (make-deque)
+  (let ((front-ptr '())
+        (rear-ptr '()))
+
+    (define (empty-queue?) (null? front-ptr))
+    (define (front-queue)
+      (if (empty-queue?)
+          (error "FRONT вызвана с пустой очередью")
+          (car front-ptr)))
+
+    (define (rear-insert item)
+      (let ((new-pair (cons item '())))
+        (cond ((empty-queue?)
+               (set! front-ptr new-pair)
+               (set! rear-ptr new-pair)
+               front-ptr)
+              (else
+               (set-cdr! rear-ptr new-pair)
+               (set! rear-ptr new-pair)
+               front-ptr))))
+
+    (define (delete)
+      (cond ((empty-queue?)
+             (error "DELETE! вызвана с пустой очередью"))
+            (else
+             (set! front-ptr (cdr front-ptr))
+             front-ptr)))
+
+    (define (dispatch m)
+      (cond ((eq? m 'delete) delete)
+            ((eq? m 'insert) insert)))
+    dispatch))
+
+
+
+(define a (cons 'a '()))
+a
+(define tmp (cons '() '()))
+
+(define b (cons 'b '()))
+
+
+(set-cdr! a tmp)
+(set-car! tmp b)
+(set-cdr! tmp a)
+(cdr (cdr a))
+
+(set-cdr! a b)
+a
+b
+(set-cdr! b a)
+(car a)
+(car (cdr a))
+(car (cdr (cdr a)))
+
+
+(define l (cons 'a b))
+l
+(set-cdr! b a)
+l
+
+
+(cons 'a (cons '() (cons 'b '())))
+(
+
+(define l (list a tmp b))
+l
+
+(cdr b)
+
+(set-cdr! tmp a)
+(set-cdr! a tmp)
+(set-car! tmp 'b)
+a
+
+(define a (list 'a '() '()))
+
+(define b (list 'b '() '()))
+
+(set-cdr! a b)
+
+
+
+(define (make-deque)
+  )
+(define (empty-deque? d)
+  )
+(define (front-deque d)
+  )
+(define (rear-deque d)
+  )
+(define (front-insert-deque! d item)
+  )
+(define (rear-insert-deque! d item)
+  )
+
+
+
+(define (make-deque)
+  (let ((front-ptr '())
+        (rear-ptr '()))
+
+    (define (empty-queue?) (or (null? front-ptr) (null? rear-ptr)))
+    (define (front-queue)
+      (if (empty-queue?)
+          (error "FRONT вызвана с пустой очередью")
+          (car front-ptr)))
+
+    (define (rear-insert item)
+      (let ((new-list (cons (cons item '()) '())))
+        (cond ((empty-queue?)
+               (set! front-ptr new-list)
+               (set! rear-ptr front-ptr)
+               front-ptr)
+              (else
+               (set-cdr! (car new-list) rear-ptr)
+               (set-cdr! rear-ptr new-list)
+               (set! rear-ptr new-list)
+               front-ptr))))
+
+    (define (front-insert item)
+      (let ((new-list (cons (cons item '()) '())))
+        (cond ((empty-queue?)
+               (set! front-ptr new-list)
+               (set! rear-ptr front-ptr)
+               front-ptr)
+              (else
+               (set-cdr! new-list front-ptr)
+               (set-cdr! (car front-ptr) new-list)
+               (set! front-ptr new-list)
+               front-ptr))))
+
+    (define (front-delete)
+      (cond ((empty-queue?)
+             (error "DELETE! вызвана с пустой очередью"))
+            (else
+             (set! front-ptr (cdr front-ptr))
+             (when (not (null? front-ptr))
+               (set-cdr! (car front-ptr) '()))
+             front-ptr)))
+
+    (define (rear-delete)
+      (cond ((empty-queue?)
+             (error "DELETE! вызвана с пустой очередью"))
+            (else
+             (set! rear-ptr (cdr (car rear-ptr)))
+             (when (not (null? rear-ptr))
+               (set-cdr! rear-ptr '()))
+             rear-ptr)))
+
+    (define (rear)
+      rear-ptr)
+    (define (front)
+      front-ptr)
+
+    (define (dispatch m)
+      (cond ((eq? m 'front-delete) front-delete)
+            ((eq? m 'rear-delete) rear-delete)
+            ((eq? m 'rear) rear)
+            ((eq? m 'front) front)
+            ((eq? m 'rear-insert) rear-insert)
+            ((eq? m 'front-insert) front-insert)
+            ))
+    dispatch))
+
+(define q (make-deque))
+((q 'rear-insert) 'a)
+((q 'rear-insert) 'b)
+((q 'rear-insert) 'c)
+((q 'rear-insert) 'd)
+
+q
+
+(define re ((q 'rear)))
+(define fr ((q 'front)))
+((q 'front))
+re
+fr
+(cdr re)
+
+((q 'front-delete))
+
+((q 'rear-delete))
+
+
+(define a (cons (cons 'a '()) '()))
+
+(define b (cons (cons 'b '()) '()))
+(define c (cons (cons 'c '()) '()))
+(define d (cons (cons 'd '()) '()))
+
+;; (set-cdr! (car newlist) (rear-ptr deque))
+;; (set-cdr! (rear-ptr deque) newlist)
+
+a
+(set-cdr! (car b) a)
+(set-cdr! a b)
+a
+b
+
+(set-cdr! (car c) b)
+(set-cdr! b c)
+(car c)
+c
+(set-cdr! (car c) '())
+(car c)
+
+(set-cdr! (car d) b)
+(set-cdr! b d)
+(cdr (car d))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; tables
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (lookup key table)
+  (let ((record (assoc key (cdr table))))
+    (if record
+        (cdr record)
+        false)))
+(define (assoc key records)
+  (cond ((null? records) false)
+        ((equal? key (caar records)) (car records))
+        (else (assoc key (cdr records)))))
+
+(define (insert! key value table)
+  (let ((record (assoc key (cdr table))))
+    (if record
+        (set-cdr! record value)
+        (set-cdr! table
+                  (cons (cons key value) (cdr table)))))
+  'ok)
+
+(define (make-table)
+  (list '*table*))
+
+(define table (make-table))
+(insert! 'a 1 table)
+table
+
+
+;; Ex 3.24
+
+(define (assoc key records)
+  (cond ((null? records) false)
+        ((equal? key (caar records)) (car records))
+        (else (assoc key (cdr records)))))
+
+(define (make-table)
+  (let ((local-table (list '*table*)))
+
+    (define (lookup key-1)
+      (let ((record (assoc key-1 (cdr local-table))))
+        (if record
+            (cdr record)
+            false)))
+
+    (define (insert! key-1 value)
+      (let ((record (assoc key-1 (cdr local-table))))
+        (if record
+            (set-cdr! record value)
+            (set-cdr! local-table
+                      (cons (cons key-1 value) (cdr local-table))))
+        'ok))
+    (define (dispatch m)
+      (cond ((eq? m 'lookup-proc) lookup)
+            ((eq? m 'insert-proc!) insert!)
+            (else (error "Unknown operation -- TABLE" m))))
+    dispatch
+    )
+  )
+
+(define tolerance 0.1)
+
+(define operation-table (make-table))
+(define get (operation-table 'lookup-proc))
+(define put (operation-table 'insert-proc!))
+
+(put 1 1.2)
+(put 1.05 3)
+(put 'b 3)
+(get 'b)
+operation-table
+
+
+;; Ex 3.25
+
+
+(define (make-table)
+  (let ((local-table (list '*table*)))
+    (define (print)
+      (display local-table))
+
+    (define (assoc key records)
+      (cond ((null? records) false)
+            ((equal? key (caar records)) (car records))
+            (else (assoc key (cdr records)))))
+
+    (define (lookup key . keys)
+      (define (sub-lookup table key keys)
+        (let ((record (assoc key (cdr table))))
+          (if record
+              (if (null? keys)
+                  (cdr record)
+                  (sub-lookup record (car keys) (cdr keys)))
+              false))
+
+        )
+      (sub-lookup local-table key keys)
+      )
+
+    (define (insert! value key . keys)
+      (define (sub-insert table value key keys)
+        (let ((record (assoc key (cdr table))))
+          (if record
+              (if (null? keys)
+                  (set-cdr! record value)
+                  (sub-insert record value (car keys) (cdr keys)))
+              (if (null? keys)
+                  (set-cdr! table (cons (cons key value) (cdr table)))
+                  (let ((sub-table (list key)))
+                    (set-cdr! table (cons sub-table (cdr table)))
+                    (sub-insert sub-table value (car keys) (cdr keys))
+                    )
+                  )
+              ))
+          )
+
+      (sub-insert local-table value key keys)
+      'ok)
+
+    (define (dispatch m)
+      (cond ((eq? m 'lookup-proc) lookup)
+            ((eq? m 'insert-proc!) insert!)
+            ((eq? m 'print) print)
+            (else (error "Unknown operation -- TABLE" m))))
+    dispatch
+    )
+  )
+
+
+(define operation-table (make-table))
+(define get (operation-table 'lookup-proc))
+(define put (operation-table 'insert-proc!))
+(define print (operation-table 'print))
+(print)
+(put 1 'test)
+(put 1 'test)
+(put 2 'test 'two)
+(get 'test)
+(get 'test 'two)
+
+;; Ex 3.26
+
+;; делаем дерево которое будет хранить помимо веса вершины еще значение
+(define (entry tree) (car tree))
+(define (left-branch tree) (cadr tree))
+(define (right-branch tree) (caddr tree))
+(define (value-tree tree) (cadddr tree))
+(define (make-tree entry left right value)
+  (list entry left right value))
+
+
+;; нужно переписать на новую структуру дерева
+(define (partial-tree elts n)
+  (if (= n 0)
+      (cons '() elts)
+      (let ((left-size (quotient (- n 1) 2)))
+        (let ((left-result (partial-tree elts left-size)))
+          (let ((left-tree (car left-result))
+                (non-left-elts (cdr left-result))
+                (right-size (- n (+ left-size 1))))
+            (let ((this-entry (car non-left-elts))
+                  (right-result (partial-tree (cdr non-left-elts)
+                                              right-size)))
+              (let ((right-tree (car right-result))
+                    (remaining-elts (cdr right-result)))
+                (cons (make-tree this-entry left-tree right-tree)
+                      remaining-elts))))))))
+
+(define (lookup given-key tree)
+  (cond ((null? tree) false)
+        ((equal? given-key (entry tree)) (entry tree))
+        ((> given-key (entry tree)) (lookup given-key (right-branch tree)))
+        ((< given-key (entry tree)) (lookup given-key (left-branch tree)))))
+
+
+(define (make-table)
+  ;; добавляем тег 'bin
+  (define (empty-bin)
+    (list '*bin*))
+  (define (sub-bin? record)
+    (equal? (car (value-tree record)) '*bin*))
+  (define (adjoin-set x set value)
+    (cond ((null? set) (make-tree x '() '() value))
+          ((= x (entry set)) set)
+          ((< x (entry set))
+           (make-tree (entry set)
+                      (adjoin-set x (left-branch set) value)
+                      (right-branch set)
+                      (value-tree set)
+                      ))
+          ((> x (entry set))
+           (make-tree (entry set)
+                      (left-branch set)
+                      (adjoin-set x (right-branch set) value)
+                      (value-tree set)))))
+
+  (let ((local-bin (empty-bin))) ;; вместо списка бинарное дерево
+    (define (print)
+      (display local-bin))
+
+    (define (assoc-bin given-key tree)
+      (cond ((null? tree) false)
+            ((equal? given-key (entry tree)) tree)
+            ((> given-key (entry tree)) (assoc-bin given-key (right-branch tree)))
+            ((< given-key (entry tree)) (assoc-bin given-key (left-branch tree)))))
+
+    (define (lookup key . keys)
+      (define (sub-lookup bin key keys)
+        (let ((record (assoc-bin key (cdr bin))))
+          (if record
+              (if (null? keys)
+                  (value-tree record)
+                  (if (sub-bin? record)
+                      (sub-lookup (value-tree record) (car keys) (cdr keys))
+                      false))
+              false))
+
+        )
+      (sub-lookup local-bin key keys)
+      )
+
+    (define (insert! value key . keys)
+      (define (sub-insert bin value key keys)
+        (let ((record (assoc-bin key (cdr bin))))
+          (display record)
+          (if record
+              (if (null? keys)
+                  (set-cdr! record (list (left-branch record)
+                                         (right-branch record)
+                                         value))
+                  (sub-insert (cadddr record) value (car keys) (cdr keys)))
+              (if (null? keys)
+                  (set-cdr! bin (adjoin-set key (cdr bin) value))
+                  (let ((sub-bin (empty-bin)))
+                    (set-cdr! bin (adjoin-set key (cdr bin) sub-bin))
+                    (sub-insert sub-bin value (car keys) (cdr keys))
+                    )
+                  )
+              ))
+          )
+      (sub-insert local-bin value key keys)
+      'ok)
+
+    (define (dispatch m)
+      (cond ((eq? m 'lookup-proc) lookup)
+            ((eq? m 'insert-proc!) insert!)
+            ((eq? m 'print) print)
+            (else (error "Unknown operation -- TABLE" m))))
+    dispatch
+    )
+  )
+
+
+(define operation-table (make-table))
+(define get (operation-table 'lookup-proc))
+(define put (operation-table 'insert-proc!))
+(define print (operation-table 'print))
+(print)
+(put 'a 1 2)
+(put 'b 1 3)
+(put 'b 2)
+(put 1 'test)
+(put 2 'two)
+(get 1)
+(get 2)
+(get 1 2)
+(get 1 3)
+(get 2)
+
+
+;; Ex. 3.27.
+
+(define (lookup key table)
+  (let ((record (assoc key (cdr table))))
+    (if record
+        (cdr record)
+        false)))
+(define (assoc key records)
+  (cond ((null? records) false)
+        ((equal? key (caar records)) (car records))
+        (else (assoc key (cdr records)))))
+(define (insert! key value table)
+  (let ((record (assoc key (cdr table))))
+    (if record
+        (set-cdr! record value)
+        (set-cdr! table
+                  (cons (cons key value) (cdr table)))))
+  'ok)
+(define (make-table)
+  (list '*table*))
+
+
+
+(define (fib n)
+  (cond ((= n 0) 0)
+        ((= n 1) 1)
+        (else (+ (fib (- n 1))
+                 (fib (- n 2))))))
+
+(define memo-fib
+  (memoize (lambda (n)
+             (cond ((= n 0) 0)
+                   ((= n 1) 1)
+                   (else (+ (memo-fib (- n 1))
+                            (memo-fib (- n 2))))))))
+
+(define (memoize f)
+  (let ((table (make-table)))
+    (display table)
+    (lambda (x)
+      (let ((previously-computed-result (lookup x table)))
+        (or previously-computed-result
+            (let ((result (f x)))
+              (display result)
+              (newline)
+              (insert! x result table)
+              result))))))
+
+(fib 6)
+(memo-fib 6)
+((memoize fib) 6)
+
+
+;; 3.3.4. Имитация цифровых схем
+
+(define (half-adder a b s c)
+  (let ((d (make-wire)) (e (make-wire)))
+    (or-gate a b d)
+    (and-gate a b c)
+    (inverter c e)
+    (and-gate d e s)
+    'ok))
+
+(define (full-adder a b c-in sum c-out)
+  (let ((s (make-wire))
+        (c1 (make-wire))
+        (c2 (make-wire)))
+    (half-adder b c-in s c1)
+    (half-adder a s sum c2)
+    (or-gate c1 c2 c-out)
+    'ok))
+
+
+(define (inverter input output)
+  (define (invert-input)
+    (let ((new-value (logical-not (get-signal input))))
+      (after-delay inverter-delay
+                   (lambda ()
+                     (set-signal! output new-value)))))
+  (add-action! input invert-input)
+  'ok)
+(define (logical-not s)
+  (cond ((= s 0) 1)
+        ((= s 1) 0)
+        (else (error "Invalid signal" s))))
+
+
+(define (and-gate a1 a2 output)
+  (define (and-action-procedure)
+    (let ((new-value
+           (logical-and (get-signal a1) (get-signal a2))))
+      (after-delay and-gate-delay
+                   (lambda ()
+                     (set-signal! output new-value)))))
+  (add-action! a1 and-action-procedure)
+  (add-action! a2 and-action-procedure)
+  'ok)
+
+(define (logical-and s1 s2)
+  (if (and (= s1 1) (= s2 1))
+      1
+      0))
+
+;; Ex. 3.28.
+
+(define (or-gate a1 a2 output)
+  (define (or-action-procedure)
+    (let ((new-value
+           (logical-or (get-signal a1) (get-signal a2))))
+      (after-delay or-gate-delay
+                   (lambda ()
+                     (set-signal! output new-value)))))
+  (add-action! a1 or-action-procedure)
+  (add-action! a2 or-action-procedure)
+  'ok)
+
+(define (logical-or s1 s2)
+  (if (or (= s1 1) (= s2 1))
+      1
+      0))
+
+;; Ex. 3.29.
+
+(or a1 a2) = (and (not a1) (not a2))
+
+0 0 0      0 1       0 0 0
+0 1 1      1 0       0 1 0
+1 0 1                1 0 0
+1 1 1                1 1 1
+
+1
+1
+1
+0
+(not (and (not a1) (not a2)))
+0
+1
+1
+1
+
+(define (or-gate a1 a2 output)
+  (let ((na1 (make-wire))
+        (na2 (make-wire))
+        (andnot (make-wire)))
+    (inverter a1 na1)
+    (inventer a2 na2)
+    (and-gate na1 na2 andnot)
+    (inventer andnot output)
+    'ok))
+
+;; время задержки будет равно сумме
+inventer-delay + inventer-delay + and-gate-delay + and-gate-delay + inventer-delay
+
+
+;; Ex. 3.30.
+
+
+(define (full-adder a b c-in sum c-out)
+  (let ((s (make-wire))
+        (c1 (make-wire))
+        (c2 (make-wire)))
+    (half-adder b c-in s c1)
+    (half-adder a s sum c2)
+    (or-gate c1 c2 c-out)
+    'ok))
+
+
+(define (riple-carry-adder A B S Cn)
+  (define (iter-carry-adder A B S Cn res)
+    (if (null? A)
+        (cons res Cn)
+        (begin
+          (let ((Sn (car S)))
+            (full-adder (car A) (car B) Cn Sn Cn)
+            (iter-carry-adder (cdr A) (cdr B) (cdr S) Cn Cn (cons Sn res))
+          ))))
+
+  (iter-carry-adder A B S Cn '())
+  )
+
+;; время задержки равно n * full-adder
+;; время задержки full-adder = half-adder + half-adder + or-gate
+;; время задержки half-adder = 2 and + 1 or + 1 not
+
+
+;; Представление проводов
+
+(define (make-wire)
+  (let ((signal-value 0) (action-procedures '()))
+    (define (set-my-signal! new-value)
+      (if (not (= signal-value new-value))
+          (begin (set! signal-value new-value)
+                 (call-each action-procedures))
+          'done))
+    (define (accept-action-procedure! proc)
+      (set! action-procedures (cons proc action-procedures))
+      (proc))
+    (define (dispatch m)
+      (cond ((eq? m 'get-signal) signal-value)
+            ((eq? m 'set-signal!) set-my-signal!)
+            ((eq? m 'add-action!) accept-action-procedure!)
+            (else (error "Unknown operation -- WIRE" m))))
+    dispatch))
+
+(define (call-each procedures)
+  (if (null? procedures)
+      'done
+      (begin
+        ((car procedures))
+        (call-each (cdr procedures)))))
+
+(define (get-signal wire)
+  (wire 'get-signal))
+(define (set-signal! wire new-value)
+  ((wire 'set-signal!) new-value))
+(define (add-action! wire action-procedure)
+  ((wire 'add-action!) action-procedure))
+
+(define (after-delay delay action)
+  (add-to-agenda! (+ delay (current-time the-agenda))
+                  action
+                  the-agenda))
+
+(define (propagate)
+  (if (empty-agenda? the-agenda)
+      'done
+      (let ((first-item (first-agenda-item the-agenda)))
+        (first-item)
+        (remove-first-agenda-item! the-agenda)
+        (propagate))))
+
+(define (probe name wire)
+  (add-action! wire
+               (lambda ()
+                 (newline)
+                 (display name)
+                 (display " ")
+                 (display (current-time the-agenda))
+                 (display "  New-value = ")
+                 (display (get-signal wire)))))
+
+
+;; Реализация agenda
+(define (make-agenda) (list 0))
+(define (current-time agenda) (car agenda))
+(define (set-current-time! agenda time)
+  (set-car! agenda time))
+(define (segments agenda) (cdr agenda))
+(define (set-segments! agenda segments)
+  (set-cdr! agenda segments))
+(define (first-segment agenda) (car (segments agenda)))
+(define (rest-segments agenda) (cdr (segments agenda)))
+(define (empty-agenda? agenda)
+  (null? (segments agenda)))
+
+
+(define (add-to-agenda! time action agenda)
+  (define (belongs-before? segments)
+    (or (null? segments)
+        (< time (segment-time (car segments)))))
+  (define (make-new-time-segment time action)
+    (let ((q (make-queue)))
+      (insert-queue! q action)
+      (make-time-segment time q)))
+  (define (add-to-segments! segments)
+    (if (= (segment-time (car segments)) time)
+        (insert-queue! (segment-queue (car segments))
+                       action)
+        (let ((rest (cdr segments)))
+          (if (belongs-before? rest)
+              (set-cdr!
+               segments
+               (cons (make-new-time-segment time action)
+                     (cdr segments)))
+              (add-to-segments! rest)))))
+  (let ((segments (segments agenda)))
+    (if (belongs-before? segments)
+        (set-segments!
+         agenda
+         (cons (make-new-time-segment time action)
+               segments))
+        (add-to-segments! segments))))
+(define (remove-first-agenda-item! agenda)
+  (let ((q (segment-queue (first-segment agenda))))
+    (delete-queue! q)
+    (if (empty-queue? q)
+        (set-segments! agenda (rest-segments agenda)))))
+(define (first-agenda-item agenda)
+  (if (empty-agenda? agenda)
+      (error "Agenda is empty -- FIRST-AGENDA-ITEM")
+      (let ((first-seg (first-segment agenda)))
+        (set-current-time! agenda (segment-time first-seg))
+        (front-queue (segment-queue first-seg)))))
+
+
+;; test
+
+(define the-agenda (make-agenda))
+(define inverter-delay 2)
+(define and-gate-delay 3)
+(define or-gate-delay 5)
+
+(define input-1 (make-wire))
+(define input-2 (make-wire))
+(define sum (make-wire))
+(define carry (make-wire))
+(probe 'sum sum)
+(probe 'carry carry)
+
+(half-adder input-1 input-2 sum carry)
